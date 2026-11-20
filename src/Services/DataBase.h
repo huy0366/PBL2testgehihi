@@ -1,23 +1,20 @@
 #pragma once
-#include "ChucVu.h"
-#include "Date.h"
-#include "FullTime.h"
-#include "PartTime.h"
-#include "Employee.h"
-#include "Hash.h"
-#include "LinkedList.h"
-#include "MucLuong.h"
-#include "MucLuong_PartTime.h"
-#include "MucLuong_FullTime.h"
-#include "PhongBan.h"
-#include "ViTriViecLam.h"
+#include "../Models/ChucVu.h"
+#include "../Models/Date.h"
+#include "../Models/FullTime.h"
+#include "../Models/PartTime.h"
+#include "../Models/Employee.h"
+#include "../DataStructures/Hash.h"
+#include "../DataStructures/LinkedList.h"
+#include "../Models/MucLuong.h"
+#include "../Models/MucLuong_PartTime.h"
+#include "../Models/MucLuong_FullTime.h"
+#include "../Models/PhongBan.h"
+#include "../Models/ViTriViecLam.h"
+#include "../Models/ChamCong.h"
 #include <sstream>
 #include <string>
 #include <fstream>
-class Employee;
-class FullTime;
-class PartTime;
-class MucLuong;
 class DataBase
 {
 private:
@@ -26,17 +23,22 @@ private:
     List<ViTriViecLam> *ListVTVL;
     List<MucLuong> *ListML;
     List<Employee> *ListEmployee;
-    Hash *HashEmployee;
+    Hash<Employee> *HashEmployee;
+    List<ChamCong> *ListCC;
+    int soFT, soPT;
 
 public:
     DataBase();
     ~DataBase();
+    int get_soFT() const;
+    int get_soPT() const;
     // thêm
     void Insert(PhongBan *, Node<PhongBan> * = nullptr);
     void Insert(ChucVu *, Node<ChucVu> * = nullptr);
     void Insert(ViTriViecLam *, Node<ViTriViecLam> * = nullptr);
     void Insert(MucLuong *, Node<MucLuong> * = nullptr);
     void Insert(Employee *, Node<Employee> * = nullptr);
+    void Insert(ChamCong *, Node<ChamCong> * = nullptr);
 
     // xóa
     void Remove(PhongBan *);
@@ -44,6 +46,7 @@ public:
     void Remove(ViTriViecLam *);
     void Remove(MucLuong *);
     void Remove(Employee *);
+    void Remove(ChamCong *);
 
     // tìm
     PhongBan *FindPB(const string &);
@@ -51,6 +54,7 @@ public:
     ViTriViecLam *FindVTVL(const string &);
     MucLuong *FindML(const string &, const int &, const string &); // mã VT, bậc, loại nv
     Employee *FindEmployee(const string &);
+    ChamCong *FindCC(const string &mnv, const Date &ngay);
 
     // sửa
     void Repair(PhongBan *);
@@ -58,6 +62,7 @@ public:
     void Repair(ViTriViecLam *);
     void Repair(MucLuong *);
     void Repair(Employee *);
+    void Repair(ChamCong *);
 
     // lấy list
     List<PhongBan> *get_ListPB();
@@ -65,6 +70,7 @@ public:
     List<ViTriViecLam> *get_ListVTVL();
     List<MucLuong> *get_ListML();
     List<Employee> *get_ListEmployee();
+    List<ChamCong> *get_ListCC();
 
     // đọc file
     void ReadFilePB(const string & = "data/PhongBan.txt");
@@ -72,6 +78,7 @@ public:
     void ReadFileVTVL(const string & = "data/ViTriViecLam.txt");
     void ReadFileML(const string & = "data/MucLuong_FullTime.txt", const string & = "data/MucLuong_PartTime.txt");
     void ReadFileEmployee(const string & = "data/Employee_FullTime.txt", const string & = "data/Employee_PartTime.txt");
+    void ReadFileChamCong(const string & = "data/ChamCong.txt");
 
     // lưu file
     void SaveFilePB(const string & = "data/PhongBan.txt");
@@ -79,6 +86,7 @@ public:
     void SaveFileVTVL(const string & = "data/ViTriViecLam.txt");
     void SaveFileML(const string & = "data/MucLuong_FullTime.txt", const string & = "data/MucLuong_PartTime.txt");
     void SaveFileEmployee(const string & = "data/Employee_FullTime.txt", const string & = "data/Employee_PartTime.txt");
+    void SaveFileChamCong(const string & = "data/ChamCong.txt");
 
     // đọc all
     void ReadAll();
@@ -86,14 +94,15 @@ public:
     void SaveAll();
 };
 
-DataBase::DataBase()
+DataBase::DataBase() : soFT(0), soPT(0)
 {
     this->ListPB = new List<PhongBan>();
     this->ListCV = new List<ChucVu>();
     this->ListVTVL = new List<ViTriViecLam>();
     this->ListML = new List<MucLuong>();
     this->ListEmployee = new List<Employee>();
-    this->HashEmployee = new Hash(101);
+    this->HashEmployee = new Hash<Employee>(101);
+    this->ListCC = new List<ChamCong>();
 }
 
 DataBase::~DataBase()
@@ -103,33 +112,75 @@ DataBase::~DataBase()
     delete ListVTVL;
     delete ListML;
     delete ListEmployee;
+    delete ListCC;
 }
 
+int DataBase::get_soFT() const { return soFT; }
+int DataBase::get_soPT() const { return soPT; }
+
+// p = null thì insert đầu
 void DataBase::Insert(PhongBan *pb, Node<PhongBan> *p)
 {
     if (pb != nullptr)
-        this->ListPB->insert(pb, p);
+        if (p == nullptr)
+            this->ListPB->insert(pb);
+        else
+            this->ListPB->insert(pb, p);
 }
 void DataBase::Insert(ChucVu *cv, Node<ChucVu> *p)
 {
     if (cv != nullptr)
-        this->ListCV->insert(cv, p);
+        if (p == nullptr)
+            this->ListCV->insert(cv);
+        else
+            this->ListCV->insert(cv, p);
 }
 void DataBase::Insert(ViTriViecLam *vt, Node<ViTriViecLam> *p)
 {
     if (vt != nullptr)
-        this->ListVTVL->insert(vt, p);
+        if (p == nullptr)
+            this->ListVTVL->insert(vt);
+        else
+            this->ListVTVL->insert(vt, p);
 }
 void DataBase::Insert(MucLuong *ml, Node<MucLuong> *p)
 {
     if (ml != nullptr)
-        this->ListML->insert(ml, p);
+        if (p == nullptr)
+            this->ListML->insert(ml);
+        else
+            this->ListML->insert(ml, p);
 }
 void DataBase::Insert(Employee *e, Node<Employee> *p)
 {
     if (e != nullptr)
-        this->ListEmployee->insert(e, p);
-    this->HashEmployee->insert(e->get_mnv(), e);
+    {
+        if (p == nullptr)
+            this->ListEmployee->insert(e);
+        else
+            this->ListEmployee->insert(e, p);
+        this->HashEmployee->insert(e->get_mnv(), e);
+        if (e->get_LoaiNV() == "FullTime")
+            ++soFT;
+        else if (e->get_LoaiNV() == "PartTime")
+            ++soPT;
+        if (e->get_PhongBan() != nullptr)
+            e->get_PhongBan()->ThemNV(e);
+        if (e->get_ChucVu() != nullptr)
+            e->get_ChucVu()->ThemNV(e);
+        if (e->get_ViTri() != nullptr)
+            e->get_ViTri()->ThemNV(e);
+    }
+}
+void DataBase::Insert(ChamCong *cc, Node<ChamCong> *p)
+{
+    if (cc != nullptr)
+    {
+        if (p == nullptr)
+            this->ListCC->insert(cc);
+        else
+            this->ListCC->insert(cc, p);
+    }
 }
 
 void DataBase::Remove(PhongBan *pb)
@@ -189,6 +240,10 @@ void DataBase::Remove(Employee *e)
     if (e == nullptr)
         return;
     this->HashEmployee->erase(e->get_mnv(), FindID);
+    if (e->get_LoaiNV() == "FullTime")
+        --soFT;
+    else if (e->get_LoaiNV() == "PartTime")
+        --soPT;
     Node<Employee> *p = this->ListEmployee->get_header()->Next;
     while (p != nullptr)
     {
@@ -199,6 +254,20 @@ void DataBase::Remove(Employee *e)
         }
         p = p->Next;
     }
+    PhongBan *pb = e->get_PhongBan();
+    pb->XoaNV(e);
+    ViTriViecLam *vt = e->get_ViTri();
+    vt->XoaNV(e);
+    ChucVu *cv = e->get_ChucVu();
+    cv->XoaNV(e);
+}
+void DataBase::Remove(ChamCong *cc)
+{
+    if (cc == nullptr || this->ListCC == nullptr)
+        return;
+    Node<ChamCong> *p = this->ListCC->find_ptr(cc);
+    if (p != nullptr)
+        this->ListCC->remove_item(p);
 }
 
 PhongBan *DataBase::FindPB(const string &ma)
@@ -250,14 +319,14 @@ MucLuong *DataBase::FindML(const string &maVT, const int &bac, const string &loa
     {
         if (p->Data != nullptr)
         {
-            MucLuong *ml = dynamic_cast<MucLuong *>(p->Data);
-            if (ml != nullptr)
+            // MucLuong *ml = dynamic_cast<MucLuong *>(p->Data);
+            if (p->Data != nullptr)
             {
-                if (ml->get_Ma_VTVL() == maVT &&
-                    ml->get_Bac_VTVL() == bac &&
-                    ml->get_Loai_NV() == loaiNV)
+                if (p->Data->get_Ma_VTVL() == maVT &&
+                    p->Data->get_Bac_VTVL() == bac &&
+                    p->Data->get_Loai_NV() == loaiNV)
                 {
-                    return ml;
+                    return p->Data;
                 }
             }
         }
@@ -267,8 +336,25 @@ MucLuong *DataBase::FindML(const string &maVT, const int &bac, const string &loa
 }
 Employee *DataBase::FindEmployee(const string &ma)
 {
-    Entity *e = this->HashEmployee->find(ma, FindID);
-    return static_cast<Employee *>(e);
+    return this->HashEmployee->find(ma, FindID);
+}
+ChamCong *DataBase::FindCC(const string &mnv, const Date &ngay)
+{
+    if (this->ListCC == nullptr)
+        return nullptr;
+    Node<ChamCong> *p = this->ListCC->get_header()->Next;
+    while (p != nullptr)
+    {
+        if (p->Data != nullptr && p->Data->get_NV() != nullptr)
+        {
+            if (p->Data->get_NV()->get_mnv() == mnv && p->Data->get_Ngay() == ngay)
+            {
+                return p->Data;
+            }
+        }
+        p = p->Next;
+    }
+    return nullptr;
 }
 
 void DataBase::Repair(PhongBan *pb)
@@ -276,35 +362,73 @@ void DataBase::Repair(PhongBan *pb)
     PhongBan *pb_old = this->FindPB(pb->get_MaPhongBan());
     if (pb_old == nullptr)
         return;
-    *pb_old = *pb;
+    pb_old->set_TenPhongBan(pb->get_TenPhongBan());
+    pb_old->set_NgayThanhLap(pb->get_NgayThanhLap());
 }
 void DataBase::Repair(ChucVu *cv)
 {
     ChucVu *cv_old = this->FindCV(cv->get_MaChucVu());
     if (cv_old == nullptr)
         return;
-    *cv_old = *cv;
+    cv_old->set_TenChucVu(cv->get_TenChucVu());
+    cv_old->set_PhuCap(cv->get_PhuCap());
 }
 void DataBase::Repair(ViTriViecLam *vt)
 {
     ViTriViecLam *vt_old = this->FindVTVL(vt->get_MaVTVL());
     if (vt_old == nullptr)
         return;
-    *vt_old = *vt;
+    vt_old->set_TenVTVL(vt->get_TenVTVL());
 }
 void DataBase::Repair(MucLuong *ml)
 {
     MucLuong *ml_old = this->FindML(ml->get_Ma_VTVL(), ml->get_Bac_VTVL(), ml->get_Loai_NV());
     if (ml_old == nullptr)
         return;
-    *ml_old = *ml;
+    ml_old->set_Luong(ml->get_Luong());
 }
 void DataBase::Repair(Employee *e)
 {
     Employee *e_old = FindEmployee(e->get_mnv());
     if (e_old == nullptr)
         return;
-    *e_old = *e;
+
+    // gỡ khỏi danh sách cũ
+    if (e_old->get_PhongBan())
+        e_old->get_PhongBan()->XoaNV(e_old);
+    if (e_old->get_ChucVu())
+        e_old->get_ChucVu()->XoaNV(e_old);
+    if (e_old->get_ViTri())
+        e_old->get_ViTri()->XoaNV(e_old);
+
+    e_old->set_name(e->get_name());
+    e_old->set_sex(e->get_sex());
+    e_old->set_NgaySinh(e->get_NgaySinh());
+    e_old->set_NgayLamViec(e->get_NgayLamViec());
+    e_old->set_PhongBan(e->get_PhongBan());
+    e_old->set_ChucVu(e->get_ChucVu());
+    e_old->set_ViTri(e->get_ViTri());
+    e_old->set_BacViTri(e->get_BacViTri());
+    e_old->set_Thuong(e->get_Thuong());
+
+    // thêm vào danh sách mới
+    if (e_old->get_PhongBan())
+        e_old->get_PhongBan()->ThemNV(e_old);
+    if (e_old->get_ChucVu())
+        e_old->get_ChucVu()->ThemNV(e_old);
+    if (e_old->get_ViTri())
+        e_old->get_ViTri()->ThemNV(e_old);
+}
+void DataBase::Repair(ChamCong *cc)
+{
+    if (cc == nullptr || cc->get_NV() == nullptr)
+        return;
+    ChamCong *cc_old = this->FindCC(cc->get_NV()->get_mnv(), cc->get_Ngay());
+    if (cc_old == nullptr)
+        return;
+    cc_old->set_TrangThai(cc->get_TrangThai());
+    cc_old->set_SoGio(cc->get_SoGio());
+    cc_old->set_GhiChu(cc->get_GhiChu());
 }
 
 List<PhongBan> *DataBase::get_ListPB()
@@ -327,6 +451,10 @@ List<Employee> *DataBase::get_ListEmployee()
 {
     return this->ListEmployee;
 }
+List<ChamCong> *DataBase::get_ListCC()
+{
+    return this->ListCC;
+}
 
 void DataBase::ReadFilePB(const string &filePath)
 {
@@ -337,17 +465,13 @@ void DataBase::ReadFilePB(const string &filePath)
     string line;
     while (getline(file, line))
     {
-        string maPB;
-        string tenPB;
-        if (line.empty())
-            continue;
-
+        string maPB, tenPB, ngay;
         stringstream ss(line);
-
-        ss >> maPB;
-        ss >> ws;
-        getline(ss, tenPB);
-        this->Insert(new PhongBan(maPB, tenPB));
+        getline(ss, maPB, '\t');
+        getline(ss, tenPB, '\t');
+        getline(ss, ngay, '\t');
+        Date ngayTL(ngay);
+        this->Insert(new PhongBan(maPB, tenPB, ngayTL));
     }
     file.close();
 }
@@ -461,18 +585,11 @@ void DataBase::ReadFileEmployee(const string &filePath1, const string &filePath2
     string line;
     while (getline(file1, line))
     {
-        string mnv;
-        string hoTen;
-        string ngay1;
-        string gioiTinh;
-        string maChucVu;
-        string maViTri;
-        string maPhongBan;
-        string ngay2;
+        string mnv, hoTen, ngay1, gioiTinh, maChucVu, maViTri, maPhongBan, ngay2;
         int bac;
         int thuong;
         // fulltime
-        int songaycong;
+        double songaycong;
         double heSoLuong = 1.0;
         stringstream ss(line);
         getline(ss, mnv, '\t');
@@ -490,7 +607,7 @@ void DataBase::ReadFileEmployee(const string &filePath1, const string &filePath2
         ViTriViecLam *vt = FindVTVL(maViTri);
         ChucVu *cv = FindCV(maChucVu);
         FullTime *e = new FullTime(mnv, hoTen, ngaySinh, gioiTinh, cv, vt, pb, ngayVaoLam, bac, thuong, songaycong, heSoLuong);
-        this->Insert(e); // BẮT BUỘC: Thêm vào danh sách và bảng băm
+        this->Insert(e);
     }
     file1.close();
 
@@ -501,17 +618,10 @@ void DataBase::ReadFileEmployee(const string &filePath1, const string &filePath2
 
     while (getline(file2, line))
     {
-        string mnv;
-        string hoTen;
-        string ngay1;
-        string gioiTinh;
-        string maChucVu;
-        string maViTri;
-        string maPhongBan;
-        string ngay2;
+        string mnv, hoTen, ngay1, gioiTinh, maChucVu, maViTri, maPhongBan, ngay2;
         int bac;
         int thuong;
-        int tglam;
+        double tglam;
         stringstream ss(line);
         getline(ss, mnv, '\t');
         getline(ss, hoTen, '\t');
@@ -529,9 +639,38 @@ void DataBase::ReadFileEmployee(const string &filePath1, const string &filePath2
         ViTriViecLam *vt = FindVTVL(maViTri);
         ChucVu *cv = FindCV(maChucVu);
         PartTime *e = new PartTime(mnv, hoTen, ngaySinh, gioiTinh, cv, vt, pb, ngayVaoLam, bac, thuong, tglam);
-        this->Insert(e); // BẮT BUỘC: Thêm vào danh sách và bảng băm
+        this->Insert(e);
     }
     file2.close();
+}
+void DataBase::ReadFileChamCong(const string &filePath)
+{
+    ifstream file(filePath);
+    if (!file.is_open())
+        return;
+    string line;
+    while (getline(file, line))
+    {
+        if (line.empty())
+            continue;
+        stringstream ss(line);
+        string mnv, strNgay, strTT, strGio, ghiChu;
+        getline(ss, mnv, '\t');
+        getline(ss, strNgay, '\t');
+        getline(ss, strTT, '\t');
+        getline(ss, strGio, '\t');
+        getline(ss, ghiChu, '\t');
+        // Tìm con trỏ nhân viên tương ứng
+        Employee *e = this->FindEmployee(mnv);
+        if (e != nullptr)
+        {
+            Date d(strNgay);
+            int tt = atoi(strTT.c_str());
+            double gio = atof(strGio.c_str());
+            this->Insert(new ChamCong(e, d, tt, gio, ghiChu));
+        }
+    }
+    file.close();
 }
 
 void DataBase::SaveFilePB(const string &filePath)
@@ -546,7 +685,7 @@ void DataBase::SaveFilePB(const string &filePath)
     while (p != nullptr)
     {
         if (p->Data != nullptr)
-            file << p->Data->get_MaPhongBan() << "\t" << p->Data->get_TenPhongBan() << "\n";
+            file << p->Data->get_MaPhongBan() << "\t" << p->Data->get_TenPhongBan() << "\t" << p->Data->get_NgayThanhLap() << "\n";
         p = p->Next;
     }
     file.close();
@@ -640,7 +779,7 @@ void DataBase::SaveFileEmployee(const string &filePath1, const string &filePath2
                 << ft->get_PhongBan()->get_MaPhongBan() << "\t"
                 << ft->get_NgayLamViec().ToString() << "\t"
                 << ft->get_BacViTri() << "\t"
-                << ft->get_ThuongPhat() << "\t"
+                << ft->get_Thuong() << "\t"
                 << ft->get_SoNgayCong() << "\t"
                 << ft->get_HeSo() << "\n";
         }
@@ -654,13 +793,36 @@ void DataBase::SaveFileEmployee(const string &filePath1, const string &filePath2
                   << pt->get_PhongBan()->get_MaPhongBan() << "\t"
                   << pt->get_NgayLamViec().ToString() << "\t"
                   << pt->get_BacViTri() << "\t"
-                  << pt->get_ThuongPhat() << "\t"
+                  << pt->get_Thuong() << "\t"
                   << pt->get_TimeWork() << "\n";
         }
         p = p->Next;
     }
     file1.close();
     file2.close();
+}
+void DataBase::SaveFileChamCong(const string &filePath)
+{
+    ofstream file(filePath);
+    if (!file.is_open())
+    {
+        cout << "Khong the ghi file cham cong: " << filePath << endl;
+        return;
+    }
+    Node<ChamCong> *p = this->ListCC->get_header()->Next;
+    while (p != nullptr)
+    {
+        if (p->Data != nullptr && p->Data->get_NV() != nullptr)
+        {
+            file << p->Data->get_NV()->get_mnv() << "\t"
+                 << p->Data->get_Ngay().ToString() << "\t"
+                 << p->Data->get_TrangThai() << "\t"
+                 << p->Data->get_SoGio() << "\t"
+                 << p->Data->get_GhiChu() << "\n";
+        }
+        p = p->Next;
+    }
+    file.close();
 }
 
 void DataBase::ReadAll()
@@ -670,6 +832,7 @@ void DataBase::ReadAll()
     this->ReadFileVTVL();
     this->ReadFileML();
     this->ReadFileEmployee();
+    this->ReadFileChamCong();
 }
 void DataBase::SaveAll()
 {
@@ -678,32 +841,75 @@ void DataBase::SaveAll()
     this->SaveFileVTVL();
     this->SaveFileML();
     this->SaveFileEmployee();
+    this->SaveFileChamCong();
 }
 
-inline double FullTime::get_ThucLinh(const double &lcb)
+inline long long FullTime::get_ThucLinh(const long long &lcb)
 {
     double luongOT = 0.0; // lương làm thêm giờ
-    int songaycong = 0;
-    if (this->SoNgayCong > 26)
+    double songaycongOT = 0.0;
+    if (this->SoNgayCong > 26.0)
     {
-        songaycong = this->SoNgayCong - 26;
-        luongOT = (songaycong) * ((lcb / 26.0) * 2.0); // lương 1 ngày x2
+        songaycongOT = this->SoNgayCong - 26.0;
+        luongOT = songaycongOT * ((lcb / 26.0) * 2.0); // lương 1 ngày x2
     }
-    double luongHS = (lcb * this->SoNgayCong - songaycong) / 26 * this->HeSo + this->ThuongPhat + this->CV->get_PhuCap();
-    double luong = luongOT + luongHS;
+    double ngayChuan = this->SoNgayCong - songaycongOT;
+    long long phuCap = (this->CV != nullptr) ? this->CV->get_PhuCap() : 0;
+    long long luongHS = (long long)((lcb * ngayChuan) / 26.0 * this->HeSo) + this->Thuong + phuCap;
+    long long luong = (long long)(luongOT + luongHS);
     return luong;
 }
 
-inline double PartTime::get_ThucLinh(const double &luonggio)
+inline long long PartTime::get_ThucLinh(const long long &luonggio)
 {
     double luongOT = 0.0; // lương làm thêm giờ
-    int timework = 0;
-    if (this->Time_Work > 80)
+    double timeworkOT = 0.0;
+    if (this->Time_Work > 80.0)
     {
-        timework = this->Time_Work - 80;
-        luongOT = timework * luonggio * 1.5; // làm vượt thời gian x1.5
+        timeworkOT = this->Time_Work - 80.0;
+        luongOT = timeworkOT * luonggio * 1.5; // làm vượt thời gian x1.5
     }
-    double luongtheogio = (this->Time_Work - timework) * luonggio + this->ThuongPhat + this->CV->get_PhuCap();
-    double luong = luongOT + luongtheogio;
+    double gioChuan = this->Time_Work - timeworkOT;
+    long long phuCap = (this->CV != nullptr) ? this->CV->get_PhuCap() : 0;
+    double luongtheogio = gioChuan * luonggio + this->Thuong + phuCap;
+    long long luong = (long long)(luongOT + luongtheogio);
     return luong;
+}
+
+bool PhongBan::ThemNV(Employee *e)
+{
+    if (e == nullptr)
+        return 0;
+    this->L->insert(e);
+    if (e->get_sex() == "Nam")
+    {
+        this->nam++;
+    }
+    else
+    {
+        this->nu++;
+    }
+    return 1;
+}
+bool PhongBan::XoaNV(Employee *e)
+{
+    Node<Employee> *p = this->L->get_header()->Next;
+    while (p != nullptr)
+    {
+        if (p->Data == e)
+        {
+            if (e->get_sex() == "Nam")
+            {
+                this->nam--;
+            }
+            else
+            {
+                this->nu--;
+            }
+            this->L->remove_item(p);
+            return 1;
+        }
+        p = p->Next;
+    }
+    return 0;
 }

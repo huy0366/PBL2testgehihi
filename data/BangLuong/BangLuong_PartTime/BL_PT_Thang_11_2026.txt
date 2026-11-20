@@ -1,0 +1,5 @@
+Mã NV	Họ tên	Lương Giờ	Giờ chuẩn	Giờ OT	Tiền OT	Thưởng	Phụ cấp	Thực lĩnh
+NV011	Trương Văn Khoa	31500	12	0	0	0	0	378000
+NV012	Lý Thị Mai	29000	8	0	0	0	0	232000
+NV013	Phan Văn Nam	33500	12	0	0	0	0	402000
+NV014	Vũ Thị Oanh	38500	12	0	0	0	0	462000

@@ -127,6 +127,14 @@ public:
     MucLuong *get_MucLuong(Employee *e) const;
     long long get_LuongCoBan(Employee *e) const;
     long long TinhLuong(Employee *e) const;
+
+    // ================= CHẤM CÔNG & LƯƠNG THEO THÁNG =================
+    double TinhNgayCongThang(Employee *e, int thang, int nam, double &gioOT) const;
+    double TinhGioLamThang(Employee *e, int thang, int nam, double &gioOT) const;
+    long long TinhLuongThang(Employee *e, int thang, int nam, double &cong_hoac_gio, double &gioOT, long long &tienOT) const;
+    void DongBoChamCong(int thang, int nam);
+    bool DaChotLuongThang(int thang, int nam) const;
+    bool XuatBangLuongThang(int thang, int nam);
     // ================= Sắp xếp & hiển thị =================
     DataBase *get_DB() const;
     void SapXep(TieuChiSapXep);
@@ -147,6 +155,7 @@ QLNV::QLNV(/* args */)
     tienToMa = "NV";
     maTiepTheo = 1;
     ngayHienTai = Date::DateHienTai();
+    this->DongBoChamCong(ngayHienTai.get_month(), ngayHienTai.get_year());
 }
 
 QLNV::~QLNV()
@@ -806,3 +815,255 @@ void QLNV::SapXep(TieuChiSapXep t)
 
 int QLNV::get_soFT() const { return DB->get_soFT(); }
 int QLNV::get_soPT() const { return DB->get_soPT(); }
+
+inline double QLNV::TinhNgayCongThang(Employee *e, int thang, int nam, double &gioOT) const
+{
+    gioOT = 0.0;
+    if (e == nullptr || this->DB == nullptr || this->DB->get_ListCC() == nullptr)
+        return 0.0;
+    double ngayCong = 0.0;
+    string mnv = e->get_mnv();
+    Node<ChamCong> *p = this->DB->get_ListCC()->get_header()->Next;
+    while (p != nullptr)
+    {
+        if (p->Data != nullptr && p->Data->get_NV() != nullptr)
+        {
+            if (p->Data->get_NV()->get_mnv() == mnv &&
+                p->Data->get_Ngay().get_month() == thang &&
+                p->Data->get_Ngay().get_year() == nam)
+            {
+                int tt = p->Data->get_TrangThai();
+                if (tt == 1) // 1: Có mặt (1 công)
+                {
+                    ngayCong += 1.0;
+                }
+                else if (tt == 2) // 2: Nửa công (0.5 công)
+                {
+                    ngayCong += 0.5;
+                }
+                else if (tt == 3) // 3: Nghỉ có phép (0 công đi làm thực tế)
+                {
+                    // Nghỉ có phép không tính vào ngày công đi làm
+                }
+                else if (tt == 4) // 4: Nghỉ không phép (0 công)
+                {
+                    // Không tính
+                }
+                else if (tt == 5) // 5: Tăng ca / OT
+                {
+                    ngayCong += 1.0;
+                    gioOT += p->Data->get_SoGio();
+                }
+            }
+        }
+        p = p->Next;
+    }
+    return ngayCong;
+}
+
+inline double QLNV::TinhGioLamThang(Employee *e, int thang, int nam, double &gioOT) const
+{
+    gioOT = 0.0;
+    if (e == nullptr || this->DB == nullptr || this->DB->get_ListCC() == nullptr)
+        return 0.0;
+    double gioChuan = 0.0;
+    string mnv = e->get_mnv();
+    Node<ChamCong> *p = this->DB->get_ListCC()->get_header()->Next;
+    while (p != nullptr)
+    {
+        if (p->Data != nullptr && p->Data->get_NV() != nullptr)
+        {
+            if (p->Data->get_NV()->get_mnv() == mnv &&
+                p->Data->get_Ngay().get_month() == thang &&
+                p->Data->get_Ngay().get_year() == nam)
+            {
+                int tt = p->Data->get_TrangThai();
+                if (tt == 1 || tt == 2) // 1: Có mặt / đúng giờ, 2: Ca ngắn / nửa ca
+                {
+                    gioChuan += p->Data->get_SoGio();
+                }
+                else if (tt == 5) // 5: Tăng ca (OT)
+                {
+                    gioOT += p->Data->get_SoGio();
+                }
+            }
+        }
+        p = p->Next;
+    }
+    return gioChuan;
+}
+
+inline long long QLNV::TinhLuongThang(Employee *e, int thang, int nam, double &cong_hoac_gio, double &gioOT, long long &tienOT) const
+{
+    cong_hoac_gio = 0.0;
+    gioOT = 0.0;
+    tienOT = 0;
+    if (e == nullptr) return 0;
+
+    long long lcbVal = this->get_LuongCoBan(e);
+    if (lcbVal < 0) lcbVal = 0;
+    long long thuong = e->get_Thuong();
+    long long phuCap = (e->get_ChucVu() != nullptr) ? e->get_ChucVu()->get_PhuCap() : 0;
+
+    if (e->get_LoaiNV() == "FullTime")
+    {
+        FullTime *ft = dynamic_cast<FullTime *>(e);
+        double nc = this->TinhNgayCongThang(e, thang, nam, gioOT);
+        cong_hoac_gio = nc;
+        // Lương 1 giờ OT = (lcb / (26 ngày * 8h)) * 1.5 = (lcb / 208.0) * 1.5
+        tienOT = (long long)(gioOT * (lcbVal / 208.0) * 1.5);
+        double hs = (ft != nullptr) ? ft->get_HeSo() : 1.0;
+        long long luongCong = (long long)((lcbVal * nc) / 26.0 * hs);
+        long long thucLinh = luongCong + tienOT + thuong + phuCap;
+        return thucLinh;
+    }
+    else if (e->get_LoaiNV() == "PartTime")
+    {
+        double gc = this->TinhGioLamThang(e, thang, nam, gioOT);
+        cong_hoac_gio = gc;
+        // Lương làm thêm giờ PartTime = gioOT * luonggio * 1.5
+        tienOT = (long long)(gioOT * lcbVal * 1.5);
+        long long luongChuan = (long long)(gc * lcbVal);
+        long long thucLinh = luongChuan + tienOT + thuong + phuCap;
+        return thucLinh;
+    }
+    return 0;
+}
+
+inline void QLNV::DongBoChamCong(int thang, int nam)
+{
+    if (this->DB == nullptr || this->DB->get_ListEmployee() == nullptr)
+        return;
+    Node<Employee> *p = this->DB->get_ListEmployee()->get_header()->Next;
+    while (p != nullptr)
+    {
+        if (p->Data != nullptr)
+        {
+            if (p->Data->get_LoaiNV() == "FullTime")
+            {
+                FullTime *ft = dynamic_cast<FullTime *>(p->Data);
+                if (ft != nullptr)
+                {
+                    double ot = 0.0;
+                    double nc = this->TinhNgayCongThang(ft, thang, nam, ot);
+                    ft->set_SoNgayCong(nc);
+                }
+            }
+            else if (p->Data->get_LoaiNV() == "PartTime")
+            {
+                PartTime *pt = dynamic_cast<PartTime *>(p->Data);
+                if (pt != nullptr)
+                {
+                    double ot = 0.0;
+                    double gc = this->TinhGioLamThang(pt, thang, nam, ot);
+                    pt->set_TimeWork(gc + ot);
+                }
+            }
+        }
+        p = p->Next;
+    }
+}
+
+inline bool QLNV::DaChotLuongThang(int thang, int nam) const
+{
+    string pathFT = "data/BangLuong/BangLuong_FullTime/BL_FT_Thang_" + to_string(thang) + "_" + to_string(nam) + ".txt";
+    string pathPT = "data/BangLuong/BangLuong_PartTime/BL_PT_Thang_" + to_string(thang) + "_" + to_string(nam) + ".txt";
+    ifstream f1(pathFT.c_str());
+    ifstream f2(pathPT.c_str());
+    bool ok1 = f1.is_open();
+    bool ok2 = f2.is_open();
+    if (ok1) f1.close();
+    if (ok2) f2.close();
+    return ok1 && ok2;
+}
+
+inline bool QLNV::XuatBangLuongThang(int thang, int nam)
+{
+    if (this->DB == nullptr || this->DB->get_ListEmployee() == nullptr)
+        return false;
+
+    // 1. Đồng bộ lại dữ liệu chấm công trước khi xuất
+    this->DongBoChamCong(thang, nam);
+
+    // 2. Xuất Bảng Lương FullTime
+    string pathFT = "data/BangLuong/BangLuong_FullTime/BL_FT_Thang_" + to_string(thang) + "_" + to_string(nam) + ".txt";
+    ofstream outFT(pathFT.c_str());
+    if (outFT.is_open())
+    {
+        outFT << "Mã NV\tHọ tên\tLương CB\tNgày công\tGiờ OT\tTiền OT\tThưởng\tPhụ cấp\tThực lĩnh\n";
+        Node<Employee> *p = this->DB->get_ListEmployee()->get_header()->Next;
+        while (p != nullptr)
+        {
+            if (p->Data != nullptr && p->Data->get_LoaiNV() == "FullTime")
+            {
+                FullTime *ft = dynamic_cast<FullTime *>(p->Data);
+                if (ft != nullptr)
+                {
+                    double ngayCong = 0.0;
+                    double gioOT = 0.0;
+                    long long tienOT = 0;
+                    long long thucLinh = this->TinhLuongThang(ft, thang, nam, ngayCong, gioOT, tienOT);
+                    long long lcbVal = this->get_LuongCoBan(ft);
+                    if (lcbVal < 0) lcbVal = 0;
+                    long long thuong = ft->get_Thuong();
+                    long long phuCap = (ft->get_ChucVu() != nullptr) ? ft->get_ChucVu()->get_PhuCap() : 0;
+
+                    outFT << ft->get_mnv() << "\t"
+                          << ft->get_name() << "\t"
+                          << lcbVal << "\t"
+                          << ngayCong << "\t"
+                          << gioOT << "\t"
+                          << tienOT << "\t"
+                          << thuong << "\t"
+                          << phuCap << "\t"
+                          << thucLinh << "\n";
+                }
+            }
+            p = p->Next;
+        }
+        outFT.close();
+    }
+
+    // 3. Xuất Bảng Lương PartTime
+    string pathPT = "data/BangLuong/BangLuong_PartTime/BL_PT_Thang_" + to_string(thang) + "_" + to_string(nam) + ".txt";
+    ofstream outPT(pathPT.c_str());
+    if (outPT.is_open())
+    {
+        outPT << "Mã NV\tHọ tên\tLương Giờ\tGiờ chuẩn\tGiờ OT\tTiền OT\tThưởng\tPhụ cấp\tThực lĩnh\n";
+        Node<Employee> *p = this->DB->get_ListEmployee()->get_header()->Next;
+        while (p != nullptr)
+        {
+            if (p->Data != nullptr && p->Data->get_LoaiNV() == "PartTime")
+            {
+                PartTime *pt = dynamic_cast<PartTime *>(p->Data);
+                if (pt != nullptr)
+                {
+                    double gioChuan = 0.0;
+                    double gioOT = 0.0;
+                    long long tienOT = 0;
+                    long long thucLinh = this->TinhLuongThang(pt, thang, nam, gioChuan, gioOT, tienOT);
+                    long long luongGio = this->get_LuongCoBan(pt);
+                    if (luongGio < 0) luongGio = 0;
+                    long long thuong = pt->get_Thuong();
+                    long long phuCap = (pt->get_ChucVu() != nullptr) ? pt->get_ChucVu()->get_PhuCap() : 0;
+
+                    outPT << pt->get_mnv() << "\t"
+                          << pt->get_name() << "\t"
+                          << luongGio << "\t"
+                          << gioChuan << "\t"
+                          << gioOT << "\t"
+                          << tienOT << "\t"
+                          << thuong << "\t"
+                          << phuCap << "\t"
+                          << thucLinh << "\n";
+                }
+            }
+            p = p->Next;
+        }
+        outPT.close();
+    }
+
+    // 4. Lưu lại danh sách nhân viên đã cập nhật ngày công và giờ làm
+    this->DB->SaveFileEmployee();
+    return true;
+}

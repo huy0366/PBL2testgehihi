@@ -2,16 +2,15 @@
 #include <string>
 #include <iomanip>
 #include <iostream>
-#include "LinkedList.h"
+#include "../DataStructures/LinkedList.h"
 #include "ChucVu.h"
 #include "PhongBan.h"
 #include "ViTriViecLam.h"
-#include "Entity.h"
+// #include "Entity.h"
 #include "Date.h"
 
 using namespace std;
-class DataBase;
-class Employee : public Entity
+class Employee
 {
 protected:
     string mnv, name, sex;
@@ -21,7 +20,7 @@ protected:
     PhongBan *PB;
     Date NgayLamViec;
     int Bac_VTVL;
-    double ThuongPhat;
+    double Thuong;
 
 public:
     Employee(const string &, const string &, const Date &, const string &,
@@ -30,13 +29,13 @@ public:
     Employee();
     virtual ~Employee();
     void set_mnv(const string &);
-    string get_mnv();
+    string get_mnv() const;
     void set_name(const string &);
-    string get_name();
+    string get_name() const;
     void set_NgaySinh(const Date &);
-    Date get_NgaySinh();
+    Date get_NgaySinh() const;
     void set_sex(const string &);
-    string get_sex();
+    string get_sex() const;
 
     void set_ChucVu(ChucVu *);
     ChucVu *get_ChucVu() const;
@@ -56,19 +55,20 @@ public:
     void set_BacViTri(const int &);
     int get_BacViTri() const;
 
-    void set_ThuongPhat(const int &);
-    int get_ThuongPhat() const;
+    void set_Thuong(const int &);
+    int get_Thuong() const;
+
+    int tinhBac(const Date &);
 
     virtual string get_LoaiNV() = 0;
-    virtual double get_ThucLinh(const double &) = 0;
-    static bool checkEmpID(Entity *entity, const string &id);
-    void Show() override;
+    virtual long long get_ThucLinh(const long long &) = 0;
+    // static bool checkEmpID(Entity *entity, const string &id);
 };
 
 Employee::Employee(const string &mnv, const string &ten, const Date &ngay_sinh, const string &gioitinh,
                    ChucVu *cv, ViTriViecLam *vt, PhongBan *pb, const Date &ngay_lam, const int &bac, const double &thuong)
     : mnv(mnv), name(ten), NgaySinh(ngay_sinh), sex(gioitinh), CV(cv), VTVL(vt),
-      PB(pb), NgayLamViec(ngay_lam), Bac_VTVL(bac), ThuongPhat(thuong)
+      PB(pb), NgayLamViec(ngay_lam), Bac_VTVL(tinhBac(ngay_lam)), Thuong(thuong)
 {
 }
 Employee::~Employee() {}
@@ -76,7 +76,7 @@ void Employee::set_name(const string &name)
 {
     this->name = name;
 }
-string Employee::get_name()
+string Employee::get_name() const
 {
     return name;
 }
@@ -85,7 +85,7 @@ void Employee::set_NgaySinh(const Date &date)
 {
     this->NgaySinh = date;
 }
-Date Employee::get_NgaySinh()
+Date Employee::get_NgaySinh() const
 {
     return NgaySinh;
 }
@@ -94,7 +94,7 @@ void Employee::set_sex(const string &sex)
 {
     this->sex = sex;
 }
-string Employee::get_sex()
+string Employee::get_sex() const
 {
     return sex;
 }
@@ -103,7 +103,7 @@ void Employee::set_mnv(const string &mnv)
     this->mnv = mnv;
 }
 
-string Employee::get_mnv()
+string Employee::get_mnv() const
 {
     return mnv;
 }
@@ -164,65 +164,59 @@ int Employee::get_BacViTri() const
 {
     return this->Bac_VTVL;
 }
-void Employee::set_ThuongPhat(const int &thuong)
+void Employee::set_Thuong(const int &thuong)
 {
-    this->ThuongPhat = thuong;
+    this->Thuong = thuong;
 }
-int Employee::get_ThuongPhat() const
+int Employee::get_Thuong() const
 {
-    return this->ThuongPhat;
+    return this->Thuong;
 }
-bool Employee::checkEmpID(Entity *entity, const string &id)
+int Employee::tinhBac(const Date &d)
+{
+    int thamNien = Date::DateHienTai().get_year() - d.get_year();
+    if (thamNien >= 10)
+        return 5;
+    if (thamNien >= 7)
+        return 4;
+    if (thamNien >= 5)
+        return 3;
+    if (thamNien >= 3)
+        return 2;
+    return 1;
+}
+// bool Employee::checkEmpID(Entity *entity, const string &id)
 
-{
-    Employee *emp = dynamic_cast<Employee *>(entity);
-    return (emp != nullptr) && (emp->get_mnv() == id);
-}
+// {
+//     Employee *emp = dynamic_cast<Employee *>(entity);
+//     return (emp != nullptr) && (emp->get_mnv() == id);
+// }
 
-void Employee::Show()
+bool FindID(Employee *e, const string &s)
 {
-    cout << left
-         << setw(10) << get_mnv()
-         << setw(20) << get_name()
-         << setw(10) << get_NgaySinh()
-         << setw(10) << get_sex()
-         << setw(10) << (get_ChucVu() ? get_ChucVu()->get_MaChucVu() : "N/A")
-         << setw(10) << (get_ViTri() ? get_ViTri()->get_TenVTVL() : "N/A")
-         << setw(15) << (get_PhongBan() ? get_PhongBan()->get_TenPhongBan() : "N/A")
-         << setw(10) << get_NgayLamViec()
-         << setw(10) << get_BacViTri();
-}
-
-bool FindID(Entity *e, const string &s)
-{
-    Employee *emp = static_cast<Employee *>(e);
-    if (e == NULL)
-    {
-        return false;
-    }
-    return emp->get_mnv() == s;
+    return e != nullptr && e->get_mnv() == s;
 }
 
-bool FindName(Entity *e, const string &s)
-{
-    Employee *emp = static_cast<Employee *>(e);
-    if (e == NULL)
-    {
-        return false;
-    }
-    return emp->get_name() == s;
-}
+// bool FindName(Entity *e, const string &s)
+// {
+//     Employee *emp = static_cast<Employee *>(e);
+//     if (e == NULL)
+//     {
+//         return false;
+//     }
+//     return emp->get_name() == s;
+// }
 
-bool FindDate(Entity *e, const Date &s)
-{
-    Employee *emp = static_cast<Employee *>(e);
-    if (e == NULL)
-    {
-        return false;
-    }
-    return emp->get_NgaySinh() == s;
-}
-// Các tiêu chí so sánh
-bool FindID(Entity *, const string &);
-bool FindName(Entity *, const string &);
-bool FindDate(Entity *, const Date &);
+// bool FindDate(Entity *e, const Date &s)
+// {
+//     Employee *emp = static_cast<Employee *>(e);
+//     if (e == NULL)
+//     {
+//         return false;
+//     }
+//     return emp->get_NgaySinh() == s;
+// }
+// // Các tiêu chí so sánh
+// bool FindID(Entity *, const string &);
+// bool FindName(Entity *, const string &);
+// bool FindDate(Entity *, const Date &);

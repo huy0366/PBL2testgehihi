@@ -1,6 +1,6 @@
 #pragma once
 // #include "Entity.h"
-#include "LinkedList.h"
+#include "../DataStructures/LinkedList.h"
 #include <iostream>
 using namespace std;
 class Employee;
