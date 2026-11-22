@@ -132,6 +132,7 @@ public:
     double TinhNgayCongThang(Employee *e, int thang, int nam, double &gioOT) const;
     double TinhGioLamThang(Employee *e, int thang, int nam, double &gioOT) const;
     long long TinhLuongThang(Employee *e, int thang, int nam, double &cong_hoac_gio, double &gioOT, long long &tienOT) const;
+    long long TinhLuongThang(Employee *e, int thang, int nam) const;
     void DongBoChamCong(int thang, int nam);
     bool DaChotLuongThang(int thang, int nam) const;
     bool XuatBangLuongThang(int thang, int nam);
@@ -750,9 +751,19 @@ long long QLNV::get_LuongCoBan(Employee *e) const
 }
 long long QLNV::TinhLuong(Employee *e) const
 {
+    if (e == nullptr)
+        return -1;
     long long luongCB = this->lcb(e);
     if (luongCB < 0)
         return -1; // Không tìm thấy mức lương hợp lệ
+
+    double cong_hoac_gio = 0.0, gioOT = 0.0;
+    long long tienOT = 0;
+    long long thucLinh = this->TinhLuongThang(e, ngayHienTai.get_month(), ngayHienTai.get_year(), cong_hoac_gio, gioOT, tienOT);
+    if (cong_hoac_gio > 0 || gioOT > 0)
+    {
+        return thucLinh;
+    }
     return e->get_ThucLinh(luongCB);
 }
 
@@ -902,32 +913,24 @@ inline long long QLNV::TinhLuongThang(Employee *e, int thang, int nam, double &c
 
     long long lcbVal = this->get_LuongCoBan(e);
     if (lcbVal < 0) lcbVal = 0;
-    long long thuong = e->get_Thuong();
-    long long phuCap = (e->get_ChucVu() != nullptr) ? e->get_ChucVu()->get_PhuCap() : 0;
 
     if (e->get_LoaiNV() == "FullTime")
     {
-        FullTime *ft = dynamic_cast<FullTime *>(e);
-        double nc = this->TinhNgayCongThang(e, thang, nam, gioOT);
-        cong_hoac_gio = nc;
-        // Lương 1 giờ OT = (lcb / (26 ngày * 8h)) * 1.5 = (lcb / 208.0) * 1.5
-        tienOT = (long long)(gioOT * (lcbVal / 208.0) * 1.5);
-        double hs = (ft != nullptr) ? ft->get_HeSo() : 1.0;
-        long long luongCong = (long long)((lcbVal * nc) / 26.0 * hs);
-        long long thucLinh = luongCong + tienOT + thuong + phuCap;
-        return thucLinh;
+        cong_hoac_gio = this->TinhNgayCongThang(e, thang, nam, gioOT);
     }
     else if (e->get_LoaiNV() == "PartTime")
     {
-        double gc = this->TinhGioLamThang(e, thang, nam, gioOT);
-        cong_hoac_gio = gc;
-        // Lương làm thêm giờ PartTime = gioOT * luonggio * 1.5
-        tienOT = (long long)(gioOT * lcbVal * 1.5);
-        long long luongChuan = (long long)(gc * lcbVal);
-        long long thucLinh = luongChuan + tienOT + thuong + phuCap;
-        return thucLinh;
+        cong_hoac_gio = this->TinhGioLamThang(e, thang, nam, gioOT);
     }
-    return 0;
+
+    return e->get_ThucLinh(lcbVal, cong_hoac_gio, gioOT, tienOT);
+}
+
+inline long long QLNV::TinhLuongThang(Employee *e, int thang, int nam) const
+{
+    double cong_hoac_gio = 0.0, gioOT = 0.0;
+    long long tienOT = 0;
+    return this->TinhLuongThang(e, thang, nam, cong_hoac_gio, gioOT, tienOT);
 }
 
 inline void QLNV::DongBoChamCong(int thang, int nam)

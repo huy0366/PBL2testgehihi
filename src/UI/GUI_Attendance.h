@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "GUI_Common.h"
 
 void Draw_Screen_CC_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL);
@@ -830,7 +830,7 @@ void Draw_Screen_CC_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
         static int modalYear = curYear;
         static bool isOpenModalCalendar = false;
         static int modalTrangThai = 1;
-        static char modalGioOT[10] = "2.0";
+        static char modalGioOT[50] = "2.0";
         static int letterModalGioOT = 3;
         static bool isModalGioOTActive = false;
         static char modalGhiChu[100] = "";
@@ -996,12 +996,18 @@ void Draw_Screen_CC_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
             DrawRectangleRoundedLinesEx(boxOTInput, 0.25f, 4, 1.5f, isModalGioOTActive ? Color{130, 40, 220, 255} : LIGHTGRAY);
 
             if (isModalGioOTActive)
-                Typing(isModalGioOTActive, modalGioOT, letterModalGioOT, mousePos, boxOTInput);
+                TypingNumber(modalGioOT, letterModalGioOT, 9);
 
             if (modalGioOT[0] == '\0')
                 DrawTextEx(myFont, "0.0", {boxOTInput.x + 15, boxOTInput.y + 5}, 22, 1, GRAY);
             else
                 DrawTextEx(myFont, modalGioOT, {boxOTInput.x + 15, boxOTInput.y + 5}, 22, 1, BLACK);
+
+            if (isModalGioOTActive && ((int)(GetTime() * 2) % 2 == 0))
+            {
+                float w = MeasureTextEx(myFont, modalGioOT, 22, 1).x;
+                DrawTextEx(myFont, "_", {boxOTInput.x + 15 + w, boxOTInput.y + 5}, 22, 1, Color{130, 40, 220, 255});
+            }
 
             DrawTextEx(myFont, "giờ", {boxOTWrap.x + 220, boxOTWrap.y + 8}, 22, 1, DARKGRAY);
             DrawTextEx(myFont, "(+1.5x lương)", {boxOTWrap.x + 265, boxOTWrap.y + 9}, 18, 1, Color{140, 50, 210, 255});
@@ -1021,7 +1027,7 @@ void Draw_Screen_CC_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
                 isModalGhiChuActive = true;
                 isModalGioOTActive = false;
             }
-            else if (modalTrangThai == 5 && CheckCollisionPointRec(mousePos, boxOTInput))
+            else if (modalTrangThai == 5 && (CheckCollisionPointRec(mousePos, boxOTInput) || CheckCollisionPointRec(mousePos, {modalBox.x + 55, modalBox.y + 220 + 4 * 36.0f, 175.0f, 30.0f})))
             {
                 isModalGioOTActive = true;
                 isModalGhiChuActive = false;
@@ -1029,17 +1035,22 @@ void Draw_Screen_CC_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
             else
             {
                 isModalGhiChuActive = false;
-                if (!CheckCollisionPointRec(mousePos, {modalBox.x + 55, modalBox.y + 220 + 4 * 36.0f, 175.0f, 30.0f}))
-                    isModalGioOTActive = false;
+                isModalGioOTActive = false;
             }
         }
 
         if (isModalGhiChuActive)
-            Typing(isModalGhiChuActive, modalGhiChu, letterModalGhiChu, mousePos, boxGC);
+            TypingKeys(modalGhiChu, letterModalGhiChu, 99);
         if (modalGhiChu[0] == '\0')
             DrawTextEx(myFont, "Nhập lý do hoặc ghi chú...", {boxGC.x + 15, boxGC.y + 8}, 20, 1, GRAY);
         else
             DrawTextEx(myFont, modalGhiChu, {boxGC.x + 15, boxGC.y + 8}, 22, 1, BLACK);
+
+        if (isModalGhiChuActive && ((int)(GetTime() * 2) % 2 == 0))
+        {
+            float w = MeasureTextEx(myFont, modalGhiChu, 22, 1).x;
+            DrawTextEx(myFont, "_", {boxGC.x + 15 + w, boxGC.y + 8}, 22, 1, Color{50, 110, 230, 255});
+        }
 
         // Nút Cập nhật & Hủy
         float btnY = modalBox.y + modalBox.height - 70;
@@ -1683,30 +1694,56 @@ void Draw_Screen_CC_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
         Rectangle boxGio = {modalBox.x + 300, yGio - 5, 110, 38};
         DrawRectangleRounded(boxGio, 0.3f, 6, Color{248, 250, 252, 255});
         DrawRectangleRoundedLinesEx(boxGio, 0.3f, 6, 1.5f, isModalGioActive ? (modalTrangThai == 5 ? Color{140, 50, 220, 255} : Color{130, 60, 210, 255}) : LIGHTGRAY);
+
+        float yGC = yGio + 50;
+        Rectangle boxGC = {modalBox.x + 35, yGC + 32, modalBox.width - 70, 42};
+
         if (Clicked && !isOpenModalCalendar)
-            isModalGioActive = CheckCollisionPointRec(mousePos, boxGio);
+        {
+            if (CheckCollisionPointRec(mousePos, boxGio) || (modalTrangThai == 5 && CheckCollisionPointRec(mousePos, {modalBox.x + 55, modalBox.y + 220 + 4 * 36.0f, 400.0f, 30.0f})))
+            {
+                isModalGioActive = true;
+                isModalGhiChuActive = false;
+            }
+            else if (CheckCollisionPointRec(mousePos, boxGC))
+            {
+                isModalGhiChuActive = true;
+                isModalGioActive = false;
+            }
+            else
+            {
+                isModalGioActive = false;
+                isModalGhiChuActive = false;
+            }
+        }
         if (isModalGioActive)
-            Typing(isModalGioActive, modalGio, letterModalGio, mousePos, boxGio);
+            TypingNumber(modalGio, letterModalGio, 9);
         DrawTextEx(myFont, modalGio, {boxGio.x + 15, boxGio.y + 7}, 24, 1, BLACK);
+        if (isModalGioActive && ((int)(GetTime() * 2) % 2 == 0))
+        {
+            float w = MeasureTextEx(myFont, modalGio, 24, 1).x;
+            DrawTextEx(myFont, "_", {boxGio.x + 15 + w, boxGio.y + 7}, 24, 1, Color{130, 60, 210, 255});
+        }
         if (modalTrangThai == 5)
             DrawTextEx(myFont, "tiếng (Hệ số OT 1.5x)", {boxGio.x + 125, yGio}, 22, 1, Color{130, 40, 210, 255});
         else
             DrawTextEx(myFont, "tiếng / ca", {boxGio.x + 125, yGio}, 22, 1, DARKGRAY);
 
         // Nhập Lý do / Ghi chú
-        float yGC = yGio + 50;
         DrawTextEx(myFont, "3. Lý do / Ghi chú:", {modalBox.x + 35, yGC}, 24, 1, BLACK);
-        Rectangle boxGC = {modalBox.x + 35, yGC + 32, modalBox.width - 70, 42};
         DrawRectangleRounded(boxGC, 0.2f, 6, Color{248, 250, 252, 255});
         DrawRectangleRoundedLinesEx(boxGC, 0.2f, 6, 1.5f, isModalGhiChuActive ? Color{130, 60, 210, 255} : LIGHTGRAY);
-        if (Clicked && !isOpenModalCalendar)
-            isModalGhiChuActive = CheckCollisionPointRec(mousePos, boxGC);
         if (isModalGhiChuActive)
-            Typing(isModalGhiChuActive, modalGhiChu, letterModalGhiChu, mousePos, boxGC);
+            TypingKeys(modalGhiChu, letterModalGhiChu, 99);
         if (modalGhiChu[0] == '\0')
             DrawTextEx(myFont, "Nhập lý do hoặc ghi chú...", {boxGC.x + 15, boxGC.y + 8}, 20, 1, GRAY);
         else
             DrawTextEx(myFont, modalGhiChu, {boxGC.x + 15, boxGC.y + 8}, 22, 1, BLACK);
+        if (isModalGhiChuActive && ((int)(GetTime() * 2) % 2 == 0))
+        {
+            float w = MeasureTextEx(myFont, modalGhiChu, 22, 1).x;
+            DrawTextEx(myFont, "_", {boxGC.x + 15 + w, boxGC.y + 8}, 22, 1, Color{130, 60, 210, 255});
+        }
 
         // Nút Cập nhật & Hủy
         float btnY = modalBox.y + modalBox.height - 70;

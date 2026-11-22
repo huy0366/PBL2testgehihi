@@ -566,6 +566,78 @@ inline int RemoveLastUTF8Char(char *str, int len)
     return i;
 }
 
+inline void TypingKeys(char *Input, int &letterCount, int maxLen = 49)
+{
+    int bsCount = 0;
+    int k = GetKeyPressed();
+    while (k > 0)
+    {
+        if (k == KEY_BACKSPACE)
+            bsCount++;
+        k = GetKeyPressed();
+    }
+    if (IsKeyPressedRepeat(KEY_BACKSPACE))
+        bsCount++;
+
+    for (int i = 0; i < bsCount; i++)
+        letterCount = RemoveLastUTF8Char(Input, letterCount);
+
+    int key = GetCharPressed();
+    while (key > 0)
+    {
+        if (key >= 32)
+        {
+            char utf8[4] = {};
+            int bytes = CodepointToUTF8(key, utf8);
+            if (letterCount + bytes < maxLen)
+            {
+                for (int b = 0; b < bytes; b++)
+                    Input[letterCount + b] = utf8[b];
+                letterCount += bytes;
+                Input[letterCount] = '\0';
+            }
+        }
+        key = GetCharPressed();
+    }
+}
+
+inline void TypingNumber(char *Input, int &letterCount, int maxLen = 9)
+{
+    int bsCount = 0;
+    int k = GetKeyPressed();
+    while (k > 0)
+    {
+        if (k == KEY_BACKSPACE)
+            bsCount++;
+        k = GetKeyPressed();
+    }
+    if (IsKeyPressedRepeat(KEY_BACKSPACE))
+        bsCount++;
+
+    for (int i = 0; i < bsCount; i++)
+        letterCount = RemoveLastUTF8Char(Input, letterCount);
+
+    int key = GetCharPressed();
+    while (key > 0)
+    {
+        if ((key >= '0' && key <= '9') || key == '.')
+        {
+            if (key == '.' && strchr(Input, '.') != nullptr)
+            {
+                key = GetCharPressed();
+                continue;
+            }
+            if (letterCount < maxLen)
+            {
+                Input[letterCount] = (char)key;
+                letterCount++;
+                Input[letterCount] = '\0';
+            }
+        }
+        key = GetCharPressed();
+    }
+}
+
 inline void Typing(bool &isActive, char *Input, int &letterCount, Vector2 &mousePos, Rectangle vung_go)
 {
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
@@ -578,37 +650,7 @@ inline void Typing(bool &isActive, char *Input, int &letterCount, Vector2 &mouse
 
     if (isActive)
     {
-        int bsCount = 0;
-        int k = GetKeyPressed();
-        while (k > 0)
-        {
-            if (k == KEY_BACKSPACE)
-                bsCount++;
-            k = GetKeyPressed();
-        }
-        if (IsKeyPressedRepeat(KEY_BACKSPACE))
-            bsCount++;
-
-        for (int i = 0; i < bsCount; i++)
-            letterCount = RemoveLastUTF8Char(Input, letterCount);
-
-        int key = GetCharPressed();
-        while (key > 0)
-        {
-            if (key >= 32)
-            {
-                char utf8[4] = {};
-                int bytes = CodepointToUTF8(key, utf8);
-                if (letterCount + bytes < 49)
-                {
-                    for (int b = 0; b < bytes; b++)
-                        Input[letterCount + b] = utf8[b];
-                    letterCount += bytes;
-                    Input[letterCount] = '\0';
-                }
-            }
-            key = GetCharPressed();
-        }
+        TypingKeys(Input, letterCount, 49);
     }
 }
 

@@ -17,6 +17,7 @@ public:
     double get_TimeWork() const;
     void set_TimeWork(const double &);
     long long get_ThucLinh(const long long &) override;
+    long long get_ThucLinh(const long long &luonggio, double gioChuan, double gioOT, long long &tienOT) override;
     string get_LoaiNV() override;
     virtual ~PartTime();
 };

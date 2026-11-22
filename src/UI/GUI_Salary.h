@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "GUI_Common.h"
 
 void Draw_Screen_ML_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL);
@@ -433,13 +433,37 @@ void Draw_Screen_ML_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
             bool isHover = canHover && CheckCollisionPointRec(mousePos, rowRect);
             if (isHover && Clicked && !hoiXoa)
             {
-                if (OpenXoa)
+                if (OpenXoa && dsXoa != nullptr)
                 {
                     Node<MucLuong> *nd = dsXoa->find_ptr(current->Data);
                     if (nd != nullptr)
+                    {
                         dsXoa->remove_item(nd);
+                        if (selectedMLKey == key)
+                        {
+                            if (dsXoa->get_size() > 0)
+                            {
+                                Node<MucLuong> *last = dsXoa->get_header()->Next;
+                                while (last->Next != nullptr)
+                                    last = last->Next;
+                                string lmvt = last->Data->get_VTVL() ? last->Data->get_Ma_VTVL() : "N/A";
+                                selectedMLKey = lmvt + "_" + to_string(last->Data->get_Bac_VTVL());
+                                needfill = true;
+                            }
+                            else
+                            {
+                                selectedMLKey = "";
+                                MaVTInput[0] = BacInput[0] = LuongInput[0] = '\0';
+                                letterCount_Ma = letterCount_Bac = letterCount_Luong = 0;
+                            }
+                        }
+                    }
                     else
+                    {
                         dsXoa->insert(current->Data);
+                        selectedMLKey = key;
+                        needfill = true;
+                    }
                 }
                 else
                 {
@@ -449,8 +473,10 @@ void Draw_Screen_ML_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
             }
 
             bool isSelected = (key == selectedMLKey);
+            if (isSelected)
+                selML = ml;
 
-            if (OpenXoa)
+            if (OpenXoa && dsXoa != nullptr)
             {
                 if (dsXoa->find_ptr(current->Data))
                 {
@@ -472,7 +498,6 @@ void Draw_Screen_ML_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
             else if (isSelected)
             {
                 DrawRectangleRec(rowRect, isHover ? Color{180, 195, 230, 255} : Color{200, 210, 235, 255});
-                selML = ml;
             }
             else if (isHover)
             {
@@ -588,55 +613,21 @@ void Draw_Screen_ML_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     }
     if (OpenXoa)
     {
-        if (Clicked && CheckCollisionPointRec(mousePos, btnHuyXoa))
+        if (Clicked && !hoiXoa && CheckCollisionPointRec(mousePos, btnHuyXoa))
         {
             delete dsXoa;
+            dsXoa = nullptr;
             OpenXoa = false;
+            selectedMLKey = "";
+            MaVTInput[0] = BacInput[0] = LuongInput[0] = '\0';
+            letterCount_Ma = letterCount_Bac = letterCount_Luong = 0;
         }
-        else if (Clicked && CheckCollisionPointRec(mousePos, btnXacNhanXoa))
+        else if (Clicked && !hoiXoa && CheckCollisionPointRec(mousePos, btnXacNhanXoa))
         {
-            if (dsXoa->get_size() == 0)
+            if (dsXoa == nullptr || dsXoa->get_size() == 0)
                 HienThongBao("Chưa chọn mức lương nào để xóa!", true);
             else
                 hoiXoa = true;
-        }
-        if (OpenXoa && dsXoa != nullptr)
-        {
-            if (XacNhan("Bạn có chắc muốn xóa " + to_string(dsXoa->get_size()) + " mức lương đã chọn?", hoiXoa))
-            {
-                int dem = 0;
-                string loiCuoi = "";
-                for (Node<MucLuong> *p = dsXoa->get_header()->Next; p != nullptr; p = p->Next)
-                {
-                    try
-                    {
-                        QL->XoaMucLuong(p->Data);
-                        dem++;
-                    }
-                    catch (const string &loi)
-                    {
-                        loiCuoi = loi;
-                    }
-                }
-
-                if (dem > 0)
-                {
-                    QL->get_DB()->SaveFileML();
-                    if (loiCuoi.empty())
-                        HienThongBao("Đã xóa " + to_string(dem) + " mức lương thành công!", false);
-                    else
-                        HienThongBao("Đã xóa " + to_string(dem) + " mức lương. " + loiCuoi, true);
-                }
-                else
-                    HienThongBao(loiCuoi.empty() ? "Xóa không thành công!" : loiCuoi, true);
-
-                delete dsXoa;
-                dsXoa = nullptr;
-                OpenXoa = false;
-                selectedMLKey = "";
-                MaVTInput[0] = BacInput[0] = LuongInput[0] = '\0';
-                letterCount_Ma = letterCount_Bac = letterCount_Luong = 0;
-            }
         }
     }
     else if (Clicked && OpenThem || OpenSua)
@@ -748,11 +739,54 @@ void Draw_Screen_ML_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
         {
             OpenXoa = true;
             dsXoa = new List<MucLuong>;
+            selectedMLKey = "";
+            MaVTInput[0] = BacInput[0] = LuongInput[0] = '\0';
+            letterCount_Ma = letterCount_Bac = letterCount_Luong = 0;
             isMaVTActive = isBacActive = isLuongActive = false;
         }
     }
 
     DrawTextEx(myFont, ("Tổng mức lương: " + to_string(totalRows)).c_str(), {1520, 955}, 20, 1, DARKGRAY);
+
+    if (OpenXoa && dsXoa != nullptr)
+    {
+        if (XacNhan("Bạn có chắc muốn xóa " + to_string(dsXoa->get_size()) + " mức lương đã chọn?", hoiXoa))
+        {
+            int dem = 0;
+            string loiCuoi = "";
+            for (Node<MucLuong> *p = dsXoa->get_header()->Next; p != nullptr; p = p->Next)
+            {
+                try
+                {
+                    QL->XoaMucLuong(p->Data);
+                    dem++;
+                }
+                catch (const string &loi)
+                {
+                    loiCuoi = loi;
+                }
+            }
+
+            if (dem > 0)
+            {
+                QL->get_DB()->SaveFileML();
+                if (loiCuoi.empty())
+                    HienThongBao("Đã xóa " + to_string(dem) + " mức lương thành công!", false);
+                else
+                    HienThongBao("Đã xóa " + to_string(dem) + " mức lương. " + loiCuoi, true);
+            }
+            else
+                HienThongBao(loiCuoi.empty() ? "Xóa không thành công!" : loiCuoi, true);
+
+            delete dsXoa;
+            dsXoa = nullptr;
+            OpenXoa = false;
+            selectedMLKey = "";
+            MaVTInput[0] = BacInput[0] = LuongInput[0] = '\0';
+            letterCount_Ma = letterCount_Bac = letterCount_Luong = 0;
+        }
+    }
+    g_isModalActive = hoiXoa;
 }
 
 void Draw_Screen_ML_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
@@ -983,13 +1017,37 @@ void Draw_Screen_ML_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
             bool isHover = canHover && CheckCollisionPointRec(mousePos, rowRect);
             if (isHover && Clicked && !hoiXoa)
             {
-                if (OpenXoa)
+                if (OpenXoa && dsXoa != nullptr)
                 {
                     Node<MucLuong> *nd = dsXoa->find_ptr(current->Data);
                     if (nd != nullptr)
+                    {
                         dsXoa->remove_item(nd);
+                        if (selectedMLKey == key)
+                        {
+                            if (dsXoa->get_size() > 0)
+                            {
+                                Node<MucLuong> *last = dsXoa->get_header()->Next;
+                                while (last->Next != nullptr)
+                                    last = last->Next;
+                                string lmvt = last->Data->get_VTVL() ? last->Data->get_Ma_VTVL() : "N/A";
+                                selectedMLKey = lmvt + "_" + to_string(last->Data->get_Bac_VTVL());
+                                needfill = true;
+                            }
+                            else
+                            {
+                                selectedMLKey = "";
+                                MaVTInput[0] = BacInput[0] = LuongInput[0] = '\0';
+                                letterCount_Ma = letterCount_Bac = letterCount_Luong = 0;
+                            }
+                        }
+                    }
                     else
+                    {
                         dsXoa->insert(current->Data);
+                        selectedMLKey = key;
+                        needfill = true;
+                    }
                 }
                 else
                 {
@@ -999,8 +1057,10 @@ void Draw_Screen_ML_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
             }
 
             bool isSelected = (key == selectedMLKey);
+            if (isSelected)
+                selML = ml;
 
-            if (OpenXoa)
+            if (OpenXoa && dsXoa != nullptr)
             {
                 if (dsXoa->find_ptr(current->Data))
                 {
@@ -1022,7 +1082,6 @@ void Draw_Screen_ML_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
             else if (isSelected)
             {
                 DrawRectangleRec(rowRect, isHover ? Color{180, 195, 230, 255} : Color{200, 210, 235, 255});
-                selML = ml;
             }
             else if (isHover)
             {
@@ -1139,55 +1198,21 @@ void Draw_Screen_ML_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     }
     if (OpenXoa)
     {
-        if (Clicked && CheckCollisionPointRec(mousePos, btnHuyXoa))
+        if (Clicked && !hoiXoa && CheckCollisionPointRec(mousePos, btnHuyXoa))
         {
             delete dsXoa;
+            dsXoa = nullptr;
             OpenXoa = false;
+            selectedMLKey = "";
+            MaVTInput[0] = BacInput[0] = LuongInput[0] = '\0';
+            letterCount_Ma = letterCount_Bac = letterCount_Luong = 0;
         }
-        else if (Clicked && CheckCollisionPointRec(mousePos, btnXacNhanXoa))
+        else if (Clicked && !hoiXoa && CheckCollisionPointRec(mousePos, btnXacNhanXoa))
         {
-            if (dsXoa->get_size() == 0)
+            if (dsXoa == nullptr || dsXoa->get_size() == 0)
                 HienThongBao("Chưa chọn mức lương nào để xóa!", true);
             else
                 hoiXoa = true;
-        }
-        if (OpenXoa && dsXoa != nullptr)
-        {
-            if (XacNhan("Bạn có chắc muốn xóa " + to_string(dsXoa->get_size()) + " mức lương đã chọn?", hoiXoa))
-            {
-                int dem = 0;
-                string loiCuoi = "";
-                for (Node<MucLuong> *p = dsXoa->get_header()->Next; p != nullptr; p = p->Next)
-                {
-                    try
-                    {
-                        QL->XoaMucLuong(p->Data);
-                        dem++;
-                    }
-                    catch (const string &loi)
-                    {
-                        loiCuoi = loi;
-                    }
-                }
-
-                if (dem > 0)
-                {
-                    QL->get_DB()->SaveFileML();
-                    if (loiCuoi.empty())
-                        HienThongBao("Đã xóa " + to_string(dem) + " mức lương thành công!", false);
-                    else
-                        HienThongBao("Đã xóa " + to_string(dem) + " mức lương. " + loiCuoi, true);
-                }
-                else
-                    HienThongBao(loiCuoi.empty() ? "Xóa không thành công!" : loiCuoi, true);
-
-                delete dsXoa;
-                dsXoa = nullptr;
-                OpenXoa = false;
-                selectedMLKey = "";
-                MaVTInput[0] = BacInput[0] = LuongInput[0] = '\0';
-                letterCount_Ma = letterCount_Bac = letterCount_Luong = 0;
-            }
         }
     }
     else if (Clicked && OpenThem || OpenSua)
@@ -1215,7 +1240,7 @@ void Draw_Screen_ML_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
                     }
                     else
                     {
-                        MucLuong *mlNew = new MucLuong_FullTime(vt, bac, luong);
+                        MucLuong *mlNew = new MucLuong_PartTime(vt, bac, luong);
                         try
                         {
                             QL->ThemMucLuong(mlNew);
@@ -1244,7 +1269,7 @@ void Draw_Screen_ML_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
                 else
                 {
 
-                    MucLuong *tam = new MucLuong_FullTime(selML->get_VTVL(), selML->get_Bac_VTVL(), luong);
+                    MucLuong *tam = new MucLuong_PartTime(selML->get_VTVL(), selML->get_Bac_VTVL(), luong);
                     try
                     {
                         QL->SuaMucLuong(tam);
@@ -1299,11 +1324,54 @@ void Draw_Screen_ML_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
         {
             OpenXoa = true;
             dsXoa = new List<MucLuong>;
+            selectedMLKey = "";
+            MaVTInput[0] = BacInput[0] = LuongInput[0] = '\0';
+            letterCount_Ma = letterCount_Bac = letterCount_Luong = 0;
             isMaVTActive = isBacActive = isLuongActive = false;
         }
     }
 
     DrawTextEx(myFont, ("Tổng mức lương: " + to_string(totalRows)).c_str(), {1520, 955}, 20, 1, DARKGRAY);
+
+    if (OpenXoa && dsXoa != nullptr)
+    {
+        if (XacNhan("Bạn có chắc muốn xóa " + to_string(dsXoa->get_size()) + " mức lương đã chọn?", hoiXoa))
+        {
+            int dem = 0;
+            string loiCuoi = "";
+            for (Node<MucLuong> *p = dsXoa->get_header()->Next; p != nullptr; p = p->Next)
+            {
+                try
+                {
+                    QL->XoaMucLuong(p->Data);
+                    dem++;
+                }
+                catch (const string &loi)
+                {
+                    loiCuoi = loi;
+                }
+            }
+
+            if (dem > 0)
+            {
+                QL->get_DB()->SaveFileML();
+                if (loiCuoi.empty())
+                    HienThongBao("Đã xóa " + to_string(dem) + " mức lương thành công!", false);
+                else
+                    HienThongBao("Đã xóa " + to_string(dem) + " mức lương. " + loiCuoi, true);
+            }
+            else
+                HienThongBao(loiCuoi.empty() ? "Xóa không thành công!" : loiCuoi, true);
+
+            delete dsXoa;
+            dsXoa = nullptr;
+            OpenXoa = false;
+            selectedMLKey = "";
+            MaVTInput[0] = BacInput[0] = LuongInput[0] = '\0';
+            letterCount_Ma = letterCount_Bac = letterCount_Luong = 0;
+        }
+    }
+    g_isModalActive = hoiXoa;
 }
 // Hàm format số có dấu chấm phân cách hàng nghìn (VD: 8450000 -> "8.450.000")
 
@@ -1753,8 +1821,10 @@ void Draw_Screen_BL_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
             // 3. Ngày công thực tế
             DrawTextEx(myFont, "Ngày công thực tế", {leftX, rowY}, labelSize, 1, labelColor);
             ostringstream ossNC;
-            if (ncDung == (int)ncDung) ossNC << (int)ncDung;
-            else ossNC << fixed << setprecision(1) << ncDung;
+            if (ncDung == (int)ncDung)
+                ossNC << (int)ncDung;
+            else
+                ossNC << fixed << setprecision(1) << ncDung;
             string sNC = ossNC.str() + " / 26 ngày";
             float wNC = MeasureTextEx(myFont, sNC.c_str(), valSize, 1).x;
             DrawTextEx(myFont, sNC.c_str(), {rightX - wNC, rowY}, valSize, 1, valColor);
@@ -1885,7 +1955,7 @@ void Draw_Screen_BL_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
                         }
                     }
                     ft->set_Thuong(newT);
-                    thuclinh = QL->TinhLuong(ft);
+                    thuclinh = QL->TinhLuongThang(ft, salaryMonth, salaryYear, ncDung, gioOTThang, tienOT);
                     if (thuclinh < 0)
                         thuclinh = 0;
                     HienThongBao("Cập nhật tiền thưởng thành công!", false);
@@ -2144,8 +2214,10 @@ void Draw_Screen_BL_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
 
             string strBac = "Bậc " + to_string(pt->get_BacViTri());
             ostringstream ossG;
-            if (tongGio == (int)tongGio) ossG << (int)tongGio << "h";
-            else ossG << fixed << setprecision(1) << tongGio << "h";
+            if (tongGio == (int)tongGio)
+                ossG << (int)tongGio << "h";
+            else
+                ossG << fixed << setprecision(1) << tongGio << "h";
             string strGio = ossG.str();
             string strLuong = FormatSoTien(luong);
 
@@ -2383,8 +2455,10 @@ void Draw_Screen_BL_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
             // 3. Số giờ làm việc thực tế
             DrawTextEx(myFont, "Giờ làm chuẩn", {leftX, rowY}, labelSize, 1, labelColor);
             ostringstream ossGC;
-            if (gioChuanThang == (int)gioChuanThang) ossGC << (int)gioChuanThang;
-            else ossGC << fixed << setprecision(1) << gioChuanThang;
+            if (gioChuanThang == (int)gioChuanThang)
+                ossGC << (int)gioChuanThang;
+            else
+                ossGC << fixed << setprecision(1) << gioChuanThang;
             string sGio = ossGC.str() + " giờ";
             float wGio = MeasureTextEx(myFont, sGio.c_str(), valSize, 1).x;
             DrawTextEx(myFont, sGio.c_str(), {rightX - wGio, rowY}, valSize, 1, valColor);
@@ -2515,7 +2589,7 @@ void Draw_Screen_BL_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
                         }
                     }
                     pt->set_Thuong(newT);
-                    thuclinh = QL->TinhLuong(pt);
+                    thuclinh = QL->TinhLuongThang(pt, salaryMonth, salaryYear, gioChuanThang, gioOTThang, tienOT);
                     if (thuclinh < 0)
                         thuclinh = 0;
                     HienThongBao("Cập nhật tiền thưởng thành công!", false);
@@ -2691,7 +2765,7 @@ void Draw_Screen_Salary(QLNV *QL)
         {
             DrawRectangleRounded(btnXuatBL, 0.3f, 6, hoverXuat ? Color{220, 248, 230, 255} : Color{235, 252, 240, 255});
             DrawRectangleRoundedLinesEx(btnXuatBL, 0.3f, 6, 1.5f, Color{40, 170, 80, 255});
-            DrawTextEx(myFont, "✓ Đã chốt (Lưu lại)", {btnXuatBL.x + 10, btnXuatBL.y + 11}, 19, 1, Color{20, 140, 60, 255});
+            DrawTextEx(myFont, "Đã chốt (Lưu lại)", {btnXuatBL.x + 10, btnXuatBL.y + 11}, 19, 1, Color{20, 140, 60, 255});
             if (hoverXuat && Clicked)
             {
                 XuatBangLuongThang(QL, salaryMonth, salaryYear);

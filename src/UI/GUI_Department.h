@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "GUI_Common.h"
 
 void Draw_Screen_PhongBan(Vector2 mousePos, bool Clicked, QLNV *QL);
@@ -276,15 +276,40 @@ void Draw_Screen_PhongBan(Vector2 mousePos, bool Clicked, QLNV *QL)
         // ----- HOVER + CHỌN DÒNG -----
         Rectangle rowRect = {(float)startX, currentY - 5, (float)(GetScreenWidth() - startX - 20), 35};
         bool isHover = canHover && CheckCollisionPointRec(mousePos, rowRect);
-        if (isHover && Clicked)
+        if (isHover && Clicked && !hoiXoa)
         {
-            if (OpenXoa)
+            if (OpenXoa && dsXoa != nullptr)
             {
                 Node<PhongBan> *nd = dsXoa->find_ptr(current->Data);
                 if (nd != nullptr)
+                {
                     dsXoa->remove_item(nd);
+                    if (selectedPhongBan == mpb)
+                    {
+                        if (dsXoa->get_size() > 0)
+                        {
+                            Node<PhongBan> *last = dsXoa->get_header()->Next;
+                            while (last->Next != nullptr)
+                                last = last->Next;
+                            selectedPhongBan = last->Data->get_MaPhongBan();
+                            needfill = true;
+                        }
+                        else
+                        {
+                            selectedPhongBan = "";
+                            MaPhongBanInput[0] = '\0';
+                            TenPhongBanInput[0] = '\0';
+                            textCalendar = "";
+                            letterCount_Ma = letterCount_Ten = 0;
+                        }
+                    }
+                }
                 else
+                {
                     dsXoa->insert(current->Data);
+                    selectedPhongBan = mpb;
+                    needfill = true;
+                }
             }
             else
             {
@@ -293,8 +318,10 @@ void Draw_Screen_PhongBan(Vector2 mousePos, bool Clicked, QLNV *QL)
             }
         }
         bool isSelected = (mpb == selectedPhongBan);
+        if (isSelected)
+            selPB = current->Data;
 
-        if (OpenXoa)
+        if (OpenXoa && dsXoa != nullptr)
         {
             if (dsXoa->find_ptr(current->Data))
             {
@@ -317,8 +344,6 @@ void Draw_Screen_PhongBan(Vector2 mousePos, bool Clicked, QLNV *QL)
         {
             // đã chọn: đậm hơn; vừa chọn vừa rê chuột: đậm thêm chút
             DrawRectangleRec(rowRect, isHover ? Color{180, 195, 230, 255} : Color{200, 210, 235, 255});
-            // lưu phòng ban đang chọn
-            selPB = current->Data;
         }
         else if (isHover)
         {
@@ -359,55 +384,23 @@ void Draw_Screen_PhongBan(Vector2 mousePos, bool Clicked, QLNV *QL)
 
     if (OpenXoa)
     {
-        if (Clicked && CheckCollisionPointRec(mousePos, btnHuyXoa))
+        if (Clicked && !hoiXoa && CheckCollisionPointRec(mousePos, btnHuyXoa))
         {
-            delete dsXoa;
-            OpenXoa = false;
-        }
-        else if (Clicked && CheckCollisionPointRec(mousePos, btnXacNhanXoa))
-        {
-            if (dsXoa->get_size() == 0)
-                HienThongBao("Chưa chọn phòng ban nào để xóa!", true);
-            else
-                hoiXoa = true;
-        }
-    }
-    if (OpenXoa && dsXoa != nullptr)
-    {
-        if (XacNhan("Bạn có chắc muốn xóa " + to_string(dsXoa->get_size()) + " phòng ban đã chọn?", hoiXoa))
-        {
-            int dem = 0;
-            string loiCuoi = "";
-            for (Node<PhongBan> *p = dsXoa->get_header()->Next; p != nullptr; p = p->Next)
-            {
-                try
-                {
-                    QL->XoaPhongBan(p->Data);
-                    dem++;
-                }
-                catch (const string &loi)
-                {
-                    loiCuoi = loi;
-                }
-            }
-
-            if (dem > 0)
-            {
-                if (loiCuoi.empty())
-                    HienThongBao("Đã xóa " + to_string(dem) + " phòng ban thành công!", false);
-                else
-                    HienThongBao("Đã xóa " + to_string(dem) + " phòng ban. " + loiCuoi, true);
-            }
-            else
-                HienThongBao(loiCuoi.empty() ? "Xóa không thành công!" : loiCuoi, true);
-
             delete dsXoa;
             dsXoa = nullptr;
             OpenXoa = false;
+            selectedPhongBan = "";
             MaPhongBanInput[0] = '\0';
             TenPhongBanInput[0] = '\0';
             textCalendar = "";
             letterCount_Ma = letterCount_Ten = 0;
+        }
+        else if (Clicked && !hoiXoa && CheckCollisionPointRec(mousePos, btnXacNhanXoa))
+        {
+            if (dsXoa == nullptr || dsXoa->get_size() == 0)
+                HienThongBao("Chưa chọn phòng ban nào để xóa!", true);
+            else
+                hoiXoa = true;
         }
     }
     else if (Clicked && (OpenThem || OpenSua))
@@ -448,6 +441,11 @@ void Draw_Screen_PhongBan(Vector2 mousePos, bool Clicked, QLNV *QL)
         {
             OpenXoa = true;
             dsXoa = new List<PhongBan>;
+            selectedPhongBan = "";
+            MaPhongBanInput[0] = '\0';
+            TenPhongBanInput[0] = '\0';
+            textCalendar = "";
+            letterCount_Ma = letterCount_Ten = 0;
             isMaPhongBanActive = isTenPhongBanActive = isOpenCalendar = false;
         }
     }
@@ -555,6 +553,46 @@ void Draw_Screen_PhongBan(Vector2 mousePos, bool Clicked, QLNV *QL)
     }
 
     DrawTextEx(myFont, ("Tổng phòng ban: " + to_string(QL->get_DB()->get_ListPB()->get_size())).c_str(), {1550, 960}, 20, 1, DARKGRAY);
+
+    if (OpenXoa && dsXoa != nullptr)
+    {
+        if (XacNhan("Bạn có chắc muốn xóa " + to_string(dsXoa->get_size()) + " phòng ban đã chọn?", hoiXoa))
+        {
+            int dem = 0;
+            string loiCuoi = "";
+            for (Node<PhongBan> *p = dsXoa->get_header()->Next; p != nullptr; p = p->Next)
+            {
+                try
+                {
+                    QL->XoaPhongBan(p->Data);
+                    dem++;
+                }
+                catch (const string &loi)
+                {
+                    loiCuoi = loi;
+                }
+            }
+
+            if (dem > 0)
+            {
+                if (loiCuoi.empty())
+                    HienThongBao("Đã xóa " + to_string(dem) + " phòng ban thành công!", false);
+                else
+                    HienThongBao("Đã xóa " + to_string(dem) + " phòng ban. " + loiCuoi, true);
+            }
+            else
+                HienThongBao(loiCuoi.empty() ? "Xóa không thành công!" : loiCuoi, true);
+
+            delete dsXoa;
+            dsXoa = nullptr;
+            OpenXoa = false;
+            MaPhongBanInput[0] = '\0';
+            TenPhongBanInput[0] = '\0';
+            textCalendar = "";
+            letterCount_Ma = letterCount_Ten = 0;
+        }
+    }
+    g_isModalActive = hoiXoa;
 }
 
 void Draw_Screen_ChucVu(Vector2 mousePos, bool Clicked, QLNV *QL)
@@ -825,15 +863,40 @@ void Draw_Screen_ChucVu(Vector2 mousePos, bool Clicked, QLNV *QL)
         // ----- HOVER + CHỌN DÒNG -----
         Rectangle rowRect = {(float)startX, currentY - 5, (float)(GetScreenWidth() - startX - 20), 35};
         bool isHover = canHover && CheckCollisionPointRec(mousepos, rowRect);
-        if (isHover && Clicked)
+        if (isHover && Clicked && !hoiXoa)
         {
-            if (OpenXoa)
+            if (OpenXoa && dsXoa != nullptr)
             {
                 Node<ChucVu> *nd = dsXoa->find_ptr(current->Data);
                 if (nd != nullptr)
+                {
                     dsXoa->remove_item(nd);
+                    if (selectedMCV == mcv)
+                    {
+                        if (dsXoa->get_size() > 0)
+                        {
+                            Node<ChucVu> *last = dsXoa->get_header()->Next;
+                            while (last->Next != nullptr)
+                                last = last->Next;
+                            selectedMCV = last->Data->get_MaChucVu();
+                            needfill = true;
+                        }
+                        else
+                        {
+                            selectedMCV = "";
+                            MaChucVuInput[0] = '\0';
+                            TenChucVuInput[0] = '\0';
+                            PhuCapInput[0] = '\0';
+                            letterCount_Ma = letterCount_Ten = letterCount_PhuCap = 0;
+                        }
+                    }
+                }
                 else
+                {
                     dsXoa->insert(current->Data);
+                    selectedMCV = mcv;
+                    needfill = true;
+                }
             }
             else
             {
@@ -842,8 +905,10 @@ void Draw_Screen_ChucVu(Vector2 mousePos, bool Clicked, QLNV *QL)
             }
         }
         bool isSelected = (mcv == selectedMCV);
+        if (isSelected)
+            selCV = current->Data;
 
-        if (OpenXoa)
+        if (OpenXoa && dsXoa != nullptr)
         {
             if (dsXoa->find_ptr(current->Data))
             {
@@ -866,8 +931,6 @@ void Draw_Screen_ChucVu(Vector2 mousePos, bool Clicked, QLNV *QL)
         {
             // đã chọn: đậm hơn; vừa chọn vừa rê chuột: đậm thêm chút
             DrawRectangleRec(rowRect, isHover ? Color{180, 195, 230, 255} : Color{200, 210, 235, 255});
-            // lưu chức vụ đang chọn
-            selCV = current->Data;
         }
         else if (isHover)
         {
@@ -905,55 +968,23 @@ void Draw_Screen_ChucVu(Vector2 mousePos, bool Clicked, QLNV *QL)
     EndScissorMode();
     if (OpenXoa)
     {
-        if (Clicked && CheckCollisionPointRec(mousepos, btnHuyXoa))
+        if (Clicked && !hoiXoa && CheckCollisionPointRec(mousepos, btnHuyXoa))
         {
             delete dsXoa;
+            dsXoa = nullptr;
             OpenXoa = false;
+            selectedMCV = "";
+            MaChucVuInput[0] = '\0';
+            TenChucVuInput[0] = '\0';
+            PhuCapInput[0] = '\0';
+            letterCount_Ma = letterCount_Ten = letterCount_PhuCap = 0;
         }
-        else if (Clicked && CheckCollisionPointRec(mousepos, btnXacNhanXoa))
+        else if (Clicked && !hoiXoa && CheckCollisionPointRec(mousepos, btnXacNhanXoa))
         {
-            if (dsXoa->get_size() == 0)
+            if (dsXoa == nullptr || dsXoa->get_size() == 0)
                 HienThongBao("Chưa chọn chức vụ nào để xóa!", true);
             else
                 hoiXoa = true;
-        }
-        if (OpenXoa && dsXoa != nullptr)
-        {
-            if (XacNhan("Bạn có chắc muốn xóa " + to_string(dsXoa->get_size()) + " chức vụ đã chọn?", hoiXoa))
-            {
-                int dem = 0;
-                string loiCuoi = "";
-                for (Node<ChucVu> *p = dsXoa->get_header()->Next; p != nullptr; p = p->Next)
-                {
-                    try
-                    {
-                        QL->XoaChucVu(p->Data);
-                        dem++;
-                    }
-                    catch (const string &loi)
-                    {
-                        loiCuoi = loi;
-                    }
-                }
-
-                if (dem > 0)
-                {
-                    if (loiCuoi.empty())
-                        HienThongBao("Đã xóa " + to_string(dem) + " chức vụ thành công!", false);
-                    else
-                        HienThongBao("Đã xóa " + to_string(dem) + " chức vụ. " + loiCuoi, true);
-                }
-                else
-                    HienThongBao(loiCuoi.empty() ? "Xóa không thành công!" : loiCuoi, true);
-
-                delete dsXoa;
-                dsXoa = nullptr;
-                OpenXoa = false;
-                MaChucVuInput[0] = '\0';
-                TenChucVuInput[0] = '\0';
-                PhuCapInput[0] = '\0';
-                letterCount_Ma = letterCount_Ten = letterCount_PhuCap = 0;
-            }
         }
     }
     else if (Clicked && (OpenThem || OpenSua))
@@ -995,6 +1026,11 @@ void Draw_Screen_ChucVu(Vector2 mousePos, bool Clicked, QLNV *QL)
         {
             OpenXoa = true;
             dsXoa = new List<ChucVu>;
+            selectedMCV = "";
+            MaChucVuInput[0] = '\0';
+            TenChucVuInput[0] = '\0';
+            PhuCapInput[0] = '\0';
+            letterCount_Ma = letterCount_Ten = letterCount_PhuCap = 0;
             isMaChucVuActive = isTenChucVuActive = isPhucCapActive = false;
         }
     }
@@ -1114,6 +1150,46 @@ void Draw_Screen_ChucVu(Vector2 mousePos, bool Clicked, QLNV *QL)
     }
 
     DrawTextEx(myFont, ("Tổng chức vụ: " + to_string(QL->get_DB()->get_ListCV()->get_size())).c_str(), {1550, 960}, 20, 1, DARKGRAY);
+
+    if (OpenXoa && dsXoa != nullptr)
+    {
+        if (XacNhan("Bạn có chắc muốn xóa " + to_string(dsXoa->get_size()) + " chức vụ đã chọn?", hoiXoa))
+        {
+            int dem = 0;
+            string loiCuoi = "";
+            for (Node<ChucVu> *p = dsXoa->get_header()->Next; p != nullptr; p = p->Next)
+            {
+                try
+                {
+                    QL->XoaChucVu(p->Data);
+                    dem++;
+                }
+                catch (const string &loi)
+                {
+                    loiCuoi = loi;
+                }
+            }
+
+            if (dem > 0)
+            {
+                if (loiCuoi.empty())
+                    HienThongBao("Đã xóa " + to_string(dem) + " chức vụ thành công!", false);
+                else
+                    HienThongBao("Đã xóa " + to_string(dem) + " chức vụ. " + loiCuoi, true);
+            }
+            else
+                HienThongBao(loiCuoi.empty() ? "Xóa không thành công!" : loiCuoi, true);
+
+            delete dsXoa;
+            dsXoa = nullptr;
+            OpenXoa = false;
+            MaChucVuInput[0] = '\0';
+            TenChucVuInput[0] = '\0';
+            PhuCapInput[0] = '\0';
+            letterCount_Ma = letterCount_Ten = letterCount_PhuCap = 0;
+        }
+    }
+    g_isModalActive = hoiXoa;
 }
 
 void Draw_Screen_Deparment(QLNV *QL)

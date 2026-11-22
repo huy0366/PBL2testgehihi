@@ -22,6 +22,7 @@ public:
     void set_SoNgayCong(const double &);
     double get_HeSo() const;
     long long get_ThucLinh(const long long &) override;
+    long long get_ThucLinh(const long long &lcb, double ngayCong, double gioOT, long long &tienOT) override;
     string get_LoaiNV() override;
     double tinhHS(const Date &);
     virtual ~FullTime();

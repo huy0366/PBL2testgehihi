@@ -844,36 +844,42 @@ void DataBase::SaveAll()
     this->SaveFileChamCong();
 }
 
+inline long long FullTime::get_ThucLinh(const long long &lcb, double ngayCong, double gioOT, long long &tienOT)
+{
+    tienOT = 0;
+    if (lcb <= 0)
+        return 0;
+    // Lương 1 giờ OT = (lcb / (26 ngày * 8h)) * 1.5 = (lcb / 208.0) * 1.5
+    tienOT = (long long)(gioOT * (lcb / 208.0) * 1.5);
+    long long phuCap = (this->CV != nullptr) ? this->CV->get_PhuCap() : 0;
+    long long luongCong = (long long)((lcb * ngayCong) / 26.0 * this->HeSo);
+    long long thucLinh = luongCong + tienOT + this->Thuong + phuCap;
+    return thucLinh;
+}
+
 inline long long FullTime::get_ThucLinh(const long long &lcb)
 {
-    double luongOT = 0.0; // lương làm thêm giờ
-    double songaycongOT = 0.0;
-    if (this->SoNgayCong > 26.0)
-    {
-        songaycongOT = this->SoNgayCong - 26.0;
-        luongOT = songaycongOT * ((lcb / 26.0) * 2.0); // lương 1 ngày x2
-    }
-    double ngayChuan = this->SoNgayCong - songaycongOT;
+    long long tienOT = 0;
+    return this->get_ThucLinh(lcb, this->SoNgayCong, 0.0, tienOT);
+}
+
+inline long long PartTime::get_ThucLinh(const long long &luonggio, double gioChuan, double gioOT, long long &tienOT)
+{
+    tienOT = 0;
+    if (luonggio <= 0)
+        return 0;
+    // Lương làm thêm giờ PartTime = gioOT * luonggio * 1.5
+    tienOT = (long long)(gioOT * luonggio * 1.5);
     long long phuCap = (this->CV != nullptr) ? this->CV->get_PhuCap() : 0;
-    long long luongHS = (long long)((lcb * ngayChuan) / 26.0 * this->HeSo) + this->Thuong + phuCap;
-    long long luong = (long long)(luongOT + luongHS);
-    return luong;
+    long long luongChuan = (long long)(gioChuan * luonggio);
+    long long thucLinh = luongChuan + tienOT + this->Thuong + phuCap;
+    return thucLinh;
 }
 
 inline long long PartTime::get_ThucLinh(const long long &luonggio)
 {
-    double luongOT = 0.0; // lương làm thêm giờ
-    double timeworkOT = 0.0;
-    if (this->Time_Work > 80.0)
-    {
-        timeworkOT = this->Time_Work - 80.0;
-        luongOT = timeworkOT * luonggio * 1.5; // làm vượt thời gian x1.5
-    }
-    double gioChuan = this->Time_Work - timeworkOT;
-    long long phuCap = (this->CV != nullptr) ? this->CV->get_PhuCap() : 0;
-    double luongtheogio = gioChuan * luonggio + this->Thuong + phuCap;
-    long long luong = (long long)(luongOT + luongtheogio);
-    return luong;
+    long long tienOT = 0;
+    return this->get_ThucLinh(luonggio, this->Time_Work, 0.0, tienOT);
 }
 
 bool PhongBan::ThemNV(Employee *e)

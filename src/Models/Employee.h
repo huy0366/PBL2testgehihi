@@ -62,6 +62,7 @@ public:
 
     virtual string get_LoaiNV() = 0;
     virtual long long get_ThucLinh(const long long &) = 0;
+    virtual long long get_ThucLinh(const long long &lcb, double cong_hoac_gio, double gioOT, long long &tienOT) = 0;
     // static bool checkEmpID(Entity *entity, const string &id);
 };
 
