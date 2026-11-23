@@ -15,11 +15,12 @@ void Draw_Screen_BangLuong(Vector2 mousePos, bool Clicked, QLNV *QL)
     bool doReset = (s_gen != g_menuGen);
     s_gen = g_menuGen;
     static bool isOpenFT = true;
-    if (doReset)
-        isOpenFT = true;
     static bool isOpenPT = false;
     if (doReset)
+    {
+        isOpenFT = true;
         isOpenPT = false;
+    }
 
     // Khung chứa dài hết cỡ chiều ngang (1450px)
     Rectangle panelBang = {330, 230, 1450.0f, 95.0f};
@@ -102,11 +103,12 @@ void Draw_Screen_MucLuong(Vector2 mousePos, bool Clicked, QLNV *QL)
     bool doReset = (s_gen != g_menuGen);
     s_gen = g_menuGen;
     static bool isOpenFT = true;
-    if (doReset)
-        isOpenFT = true;
     static bool isOpenPT = false;
     if (doReset)
+    {
+        isOpenFT = true;
         isOpenPT = false;
+    }
 
     // Khung chứa dài hết cỡ chiều ngang (1450px)
     Rectangle panelBang = {330, 230, 1450.0f, 95.0f};
@@ -188,82 +190,63 @@ void Draw_Screen_ML_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     static int s_gen = 0; // reset trạng thái khi chuyển mục
     bool doReset = (s_gen != g_resetGen);
     s_gen = g_resetGen;
+
     static bool isMaVTActive = false;
-    if (doReset)
-        isMaVTActive = false;
     static bool isBacActive = false;
-    if (doReset)
-        isBacActive = false;
     static bool isLuongActive = false;
-    if (doReset)
-        isLuongActive = false;
     static bool needfill = false;
-    if (doReset)
-        needfill = false;
     static List<MucLuong> *dsXoa = nullptr;
     static string selectedMLKey = "";
-    if (doReset)
-        selectedMLKey = "";
     static bool hoiXoa = false;
-    if (doReset)
-        hoiXoa = false;
 
     // --- Combobox Mã VTVL ---
     static bool isDropVT = false; // dropdown đang mở?
-    if (doReset)
-        isDropVT = false;
     static char searchVT[50] = "\0"; // ô search
-    if (doReset)
-        searchVT[0] = '\0';
     static int letterSearchVT = 0;
-    if (doReset)
-        letterSearchVT = 0;
     static string selectedMaVT = ""; // giá trị đã chọn
-    if (doReset)
-        selectedMaVT = "";
 
     // --- Combobox Bậc ---
     static bool isDropBac = false;
-    if (doReset)
-        isDropBac = false;
     static int selectedBac = 0; // 0 = chưa chọn
-    if (doReset)
-        selectedBac = 0;
 
     static char MaVTInput[50] = "\0";
-    if (doReset)
-        MaVTInput[0] = '\0';
     static int letterCount_Ma = 0;
-    if (doReset)
-        letterCount_Ma = 0;
-
     static char BacInput[50] = "\0";
-    if (doReset)
-        BacInput[0] = '\0';
     static int letterCount_Bac = 0;
-    if (doReset)
-        letterCount_Bac = 0;
-
     static char LuongInput[50] = "\0";
-    if (doReset)
-        LuongInput[0] = '\0';
     static int letterCount_Luong = 0;
-    if (doReset)
-        letterCount_Luong = 0;
-
     static bool OpenThem = false;
-    if (doReset)
-        OpenThem = false;
     static bool OpenSua = false;
-    if (doReset)
-        OpenSua = false;
     static bool OpenXoa = false;
+    static float scrollY = 0.0f;
+
     if (doReset)
     {
+        isMaVTActive = false;
+        isBacActive = false;
+        isLuongActive = false;
+        needfill = false;
         if (OpenXoa)
             delete dsXoa;
         dsXoa = nullptr;
+        selectedMLKey = "";
+        hoiXoa = false;
+        isDropVT = false;
+        searchVT[0] = '\0';
+        letterSearchVT = 0;
+        selectedMaVT = "";
+        isDropBac = false;
+        selectedBac = 0;
+        MaVTInput[0] = '\0';
+        letterCount_Ma = 0;
+        BacInput[0] = '\0';
+        letterCount_Bac = 0;
+        LuongInput[0] = '\0';
+        letterCount_Luong = 0;
+        OpenThem = false;
+        OpenSua = false;
         OpenXoa = false;
+        scrollY = 0.0f;
     }
 
     // =========== BẢNG 1: THÔNG TIN MỨC LƯƠNG FULLTIME ===========
@@ -376,9 +359,6 @@ void Draw_Screen_ML_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     DrawRectangleRounded(panelBang2, 0.03f, 10, WHITE);
     DrawRectangleRoundedLinesEx(panelBang2, 0.03f, 10, 1.5f, Color{225, 230, 240, 255});
 
-    static float scrollY = 0.0f;
-    if (doReset)
-        scrollY = 0.0f;
     float scrollSpeed = 30.0f;
     float wheel = GetMouseWheelMove();
     if (wheel != 0.0f)
@@ -794,60 +774,46 @@ void Draw_Screen_ML_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     static int s_gen = 0; // reset trạng thái khi chuyển mục
     bool doReset = (s_gen != g_resetGen);
     s_gen = g_resetGen;
+
     static bool isMaVTActive = false;
-    if (doReset)
-        isMaVTActive = false;
     static bool isBacActive = false;
-    if (doReset)
-        isBacActive = false;
     static bool isLuongActive = false;
-    if (doReset)
-        isLuongActive = false;
     static bool needfill = false;
-    if (doReset)
-        needfill = false;
     static List<MucLuong> *dsXoa = nullptr;
     static string selectedMLKey = "";
-    if (doReset)
-        selectedMLKey = "";
     static bool hoiXoa = false;
-    if (doReset)
-        hoiXoa = false;
-
     static char MaVTInput[50] = "\0";
-    if (doReset)
-        MaVTInput[0] = '\0';
     static int letterCount_Ma = 0;
-    if (doReset)
-        letterCount_Ma = 0;
-
     static char BacInput[50] = "\0";
-    if (doReset)
-        BacInput[0] = '\0';
     static int letterCount_Bac = 0;
-    if (doReset)
-        letterCount_Bac = 0;
-
     static char LuongInput[50] = "\0";
-    if (doReset)
-        LuongInput[0] = '\0';
     static int letterCount_Luong = 0;
-    if (doReset)
-        letterCount_Luong = 0;
-
     static bool OpenThem = false;
-    if (doReset)
-        OpenThem = false;
     static bool OpenSua = false;
-    if (doReset)
-        OpenSua = false;
     static bool OpenXoa = false;
+    static float scrollY = 0.0f;
+
     if (doReset)
     {
+        isMaVTActive = false;
+        isBacActive = false;
+        isLuongActive = false;
+        needfill = false;
         if (OpenXoa)
             delete dsXoa;
         dsXoa = nullptr;
+        selectedMLKey = "";
+        hoiXoa = false;
+        MaVTInput[0] = '\0';
+        letterCount_Ma = 0;
+        BacInput[0] = '\0';
+        letterCount_Bac = 0;
+        LuongInput[0] = '\0';
+        letterCount_Luong = 0;
+        OpenThem = false;
+        OpenSua = false;
         OpenXoa = false;
+        scrollY = 0.0f;
     }
 
     // =========== BẢNG 1: THÔNG TIN MỨC LƯƠNG PARTTIME ===========
@@ -960,9 +926,6 @@ void Draw_Screen_ML_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     DrawRectangleRounded(panelBang2, 0.03f, 10, WHITE);
     DrawRectangleRoundedLinesEx(panelBang2, 0.03f, 10, 1.5f, Color{225, 230, 240, 255});
 
-    static float scrollY = 0.0f;
-    if (doReset)
-        scrollY = 0.0f;
     float scrollSpeed = 30.0f;
     float wheel = GetMouseWheelMove();
     if (wheel != 0.0f)
@@ -1384,9 +1347,49 @@ void Draw_Screen_BL_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     static int s_gen = 0; // reset trạng thái khi chuyển mục
     bool doReset = (s_gen != g_resetGen);
     s_gen = g_resetGen;
+
     static long long tongluong = 0;
+    static bool isChucVuOpen1 = false;
+    static int selectedChucVuIndex1 = 0;
+    static bool isPhongOpen1 = false;
+    static int selectedPhongIndex1 = 0;
+    static bool isHoTenActive1 = false;
+    static char hoTenInput1[50] = "\0";
+    static int letterCount1 = 0;
+    static bool isSortOpen1 = false;
+    static int selectedSortIndex1 = 0;
+    static string selectedMNV_FT = "";
+    static bool isOpenChiTiet = false;
+    static bool isEditingThuong = false;
+    static bool isThuongActive = false;
+    static char thuongInput[20] = "";
+    static int thuongLetterCount = 0;
+    static string lastSelectedMNV = "";
+    static string tieuchi_CV = "";
+    static string tieuchi_PB = "";
+    static float scrollY = 0.0f;
+
     if (doReset)
+    {
         tongluong = 0;
+        isChucVuOpen1 = false;
+        selectedChucVuIndex1 = 0;
+        isPhongOpen1 = false;
+        selectedPhongIndex1 = 0;
+        isHoTenActive1 = false;
+        hoTenInput1[0] = '\0';
+        letterCount1 = 0;
+        isSortOpen1 = false;
+        selectedSortIndex1 = 0;
+        selectedMNV_FT = "";
+        isOpenChiTiet = false;
+        isEditingThuong = false;
+        isThuongActive = false;
+        thuongInput[0] = '\0';
+        thuongLetterCount = 0;
+        scrollY = 0.0f;
+    }
+
     Rectangle panelBang = {330, 345, 1450.0f, 640.0f};
     DrawRectangleRounded({panelBang.x + 3, panelBang.y + 4, panelBang.width, panelBang.height}, 0.03f, 10, Fade(BLACK, 0.08f));
     DrawRectangleRounded(panelBang, 0.03f, 10, WHITE);
@@ -1395,66 +1398,20 @@ void Draw_Screen_BL_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
 
     // =========== COMBO CHỨC VỤ ===========
     Rectangle comboChucVu1 = {350, 400, 250, 45};
-    static bool isChucVuOpen1 = false;
-    if (doReset)
-        isChucVuOpen1 = false;
-    static int selectedChucVuIndex1 = 0;
-    if (doReset)
-        selectedChucVuIndex1 = 0;
 
     // =========== COMBO PHÒNG BAN ===========
     Rectangle comboPhong1 = {620, 400, 250, 45};
-    static bool isPhongOpen1 = false;
-    if (doReset)
-        isPhongOpen1 = false;
-    static int selectedPhongIndex1 = 0;
-    if (doReset)
-        selectedPhongIndex1 = 0;
 
     // =========== Ô TÌM KIẾM ===========
     Rectangle textHoTen1 = {890, 400, 350, 45};
-    static bool isHoTenActive1 = false;
-    if (doReset)
-        isHoTenActive1 = false;
-    static char hoTenInput1[50] = "\0";
-    if (doReset)
-        hoTenInput1[0] = '\0';
-    static int letterCount1 = 0;
-    if (doReset)
-        letterCount1 = 0;
 
     // =========== COMBO SẮP XẾP LƯƠNG (CHỈ TĂNG HOẶC GIẢM) ===========
     Rectangle comboSort1 = {1290, 400, 260, 45};
-    static bool isSortOpen1 = false;
-    if (doReset)
-        isSortOpen1 = false;
-    static int selectedSortIndex1 = 0;
-    if (doReset)
-        selectedSortIndex1 = 0;
     string dsSort[] = {"...", "Lương tăng dần", "Lương giảm dần"};
     int nSort = 2;
 
     // =========== TRẠNG THÁI CHỌN NHÂN VIÊN & CHI TIẾT ===========
-    static string selectedMNV_FT = "";
-    if (doReset)
-        selectedMNV_FT = "";
-    static bool isOpenChiTiet = false;
-    if (doReset)
-        isOpenChiTiet = false;
     bool openedThisFrame = false; // Cờ chống nháy khi vừa bấm mở modal
-    static bool isEditingThuong = false;
-    if (doReset)
-        isEditingThuong = false;
-    static bool isThuongActive = false;
-    if (doReset)
-        isThuongActive = false;
-    static char thuongInput[20] = "";
-    if (doReset)
-        thuongInput[0] = '\0';
-    static int thuongLetterCount = 0;
-    if (doReset)
-        thuongLetterCount = 0;
-    static string lastSelectedMNV = "";
     if (lastSelectedMNV != selectedMNV_FT)
     {
         lastSelectedMNV = selectedMNV_FT;
@@ -1462,14 +1419,7 @@ void Draw_Screen_BL_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
         isThuongActive = false;
     }
 
-    // =========== LẤY TIÊU CHÍ LỌC ===========
-    static string tieuchi_CV = "";
-    static string tieuchi_PB = "";
-
     // =========== CẤU HÌNH BẢNG ===========
-    static float scrollY = 0.0f;
-    if (doReset)
-        scrollY = 0.0f;
     float scrollSpeed = 30.0f;
 
     if (selectedChucVuIndex1 != 0)
@@ -2034,9 +1984,49 @@ void Draw_Screen_BL_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     static int s_gen = 0; // reset trạng thái khi chuyển mục
     bool doReset = (s_gen != g_resetGen);
     s_gen = g_resetGen;
+
     static long long tongluong = 0;
+    static bool isChucVuOpen2 = false;
+    static int selectedChucVuIndex2 = 0;
+    static bool isPhongOpen2 = false;
+    static int selectedPhongIndex2 = 0;
+    static bool isHoTenActive2 = false;
+    static char hoTenInput2[50] = "\0";
+    static int letterCount2 = 0;
+    static bool isSortOpen2 = false;
+    static int selectedSortIndex2 = 0;
+    static string selectedMNV_PT = "";
+    static bool isOpenChiTiet2 = false;
+    static bool isEditingThuong2 = false;
+    static bool isThuongActive2 = false;
+    static char thuongInput2[20] = "";
+    static int thuongLetterCount2 = 0;
+    static string lastSelectedMNV2 = "";
+    static string tieuchi_CV = "";
+    static string tieuchi_PB = "";
+    static float scrollY = 0.0f;
+
     if (doReset)
+    {
         tongluong = 0;
+        isChucVuOpen2 = false;
+        selectedChucVuIndex2 = 0;
+        isPhongOpen2 = false;
+        selectedPhongIndex2 = 0;
+        isHoTenActive2 = false;
+        hoTenInput2[0] = '\0';
+        letterCount2 = 0;
+        isSortOpen2 = false;
+        selectedSortIndex2 = 0;
+        selectedMNV_PT = "";
+        isOpenChiTiet2 = false;
+        isEditingThuong2 = false;
+        isThuongActive2 = false;
+        thuongInput2[0] = '\0';
+        thuongLetterCount2 = 0;
+        scrollY = 0.0f;
+    }
+
     Rectangle panelBang = {330, 345, 1450.0f, 640.0f};
     DrawRectangleRounded({panelBang.x + 3, panelBang.y + 4, panelBang.width, panelBang.height}, 0.03f, 10, Fade(BLACK, 0.08f));
     DrawRectangleRounded(panelBang, 0.03f, 10, WHITE);
@@ -2045,66 +2035,20 @@ void Draw_Screen_BL_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
 
     // =========== COMBO CHỨC VỤ ===========
     Rectangle comboChucVu2 = {350, 400, 250, 45};
-    static bool isChucVuOpen2 = false;
-    if (doReset)
-        isChucVuOpen2 = false;
-    static int selectedChucVuIndex2 = 0;
-    if (doReset)
-        selectedChucVuIndex2 = 0;
 
     // =========== COMBO PHÒNG BAN ===========
     Rectangle comboPhong2 = {620, 400, 250, 45};
-    static bool isPhongOpen2 = false;
-    if (doReset)
-        isPhongOpen2 = false;
-    static int selectedPhongIndex2 = 0;
-    if (doReset)
-        selectedPhongIndex2 = 0;
 
     // =========== Ô TÌM KIẾM ===========
     Rectangle textHoTen2 = {890, 400, 350, 45};
-    static bool isHoTenActive2 = false;
-    if (doReset)
-        isHoTenActive2 = false;
-    static char hoTenInput2[50] = "\0";
-    if (doReset)
-        hoTenInput2[0] = '\0';
-    static int letterCount2 = 0;
-    if (doReset)
-        letterCount2 = 0;
 
     // =========== COMBO SẮP XẾP LƯƠNG (CHỈ TĂNG HOẶC GIẢM) ===========
     Rectangle comboSort2 = {1290, 400, 260, 45};
-    static bool isSortOpen2 = false;
-    if (doReset)
-        isSortOpen2 = false;
-    static int selectedSortIndex2 = 0;
-    if (doReset)
-        selectedSortIndex2 = 0;
     string dsSort[] = {"...", "Lương tăng dần", "Lương giảm dần"};
     int nSort = 2;
 
     // =========== TRẠNG THÁI CHỌN NHÂN VIÊN & CHI TIẾT ===========
-    static string selectedMNV_PT = "";
-    if (doReset)
-        selectedMNV_PT = "";
-    static bool isOpenChiTiet2 = false;
-    if (doReset)
-        isOpenChiTiet2 = false;
     bool openedThisFrame2 = false; // Cờ chống nháy khi vừa bấm mở modal
-    static bool isEditingThuong2 = false;
-    if (doReset)
-        isEditingThuong2 = false;
-    static bool isThuongActive2 = false;
-    if (doReset)
-        isThuongActive2 = false;
-    static char thuongInput2[20] = "";
-    if (doReset)
-        thuongInput2[0] = '\0';
-    static int thuongLetterCount2 = 0;
-    if (doReset)
-        thuongLetterCount2 = 0;
-    static string lastSelectedMNV2 = "";
     if (lastSelectedMNV2 != selectedMNV_PT)
     {
         lastSelectedMNV2 = selectedMNV_PT;
@@ -2112,13 +2056,7 @@ void Draw_Screen_BL_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
         isThuongActive2 = false;
     }
 
-    // =========== LẤY TIÊU CHÍ LỌC ===========
-    static string tieuchi_CV = "";
-    static string tieuchi_PB = "";
     // =========== CẤU HÌNH BẢNG ===========
-    static float scrollY = 0.0f;
-    if (doReset)
-        scrollY = 0.0f;
     float scrollSpeed = 30.0f;
     if (selectedChucVuIndex2 != 0)
     {
@@ -2685,11 +2623,12 @@ void Draw_Screen_Salary(QLNV *QL)
     bool doReset = (s_gen != g_menuGen);
     s_gen = g_menuGen;
     static bool isOpenBL = true;
-    if (doReset)
-        isOpenBL = true;
     static bool isOpenML = false;
     if (doReset)
+    {
+        isOpenBL = true;
         isOpenML = false;
+    }
     Vector2 mousePos = GetMousePosition();
     bool Clicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 

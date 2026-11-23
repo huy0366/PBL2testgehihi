@@ -17,7 +17,7 @@ void Draw_Screen_ChamCong(QLNV *QL)
     static bool isIconLoaded = false;
     if (!isIconLoaded)
     {
-        iconCC = LoadTexture("photo/icon/Asset.png");
+        iconCC = LoadTexture("photo/icon/Asset-5.png");
         isIconLoaded = true;
     }
     Vector2 pIcon = {370.0f, 45.0f};
@@ -30,11 +30,12 @@ void Draw_Screen_ChamCong(QLNV *QL)
     bool doReset = (s_gen != g_menuGen);
     s_gen = g_menuGen;
     static bool isOpenFT = true;
-    if (doReset)
-        isOpenFT = true;
     static bool isOpenPT = false;
     if (doReset)
+    {
+        isOpenFT = true;
         isOpenPT = false;
+    }
 
     Rectangle panelTab = {330, 160, 1450.0f, 95.0f};
     DrawRectangleRounded({panelTab.x + 3, panelTab.y + 4, panelTab.width, panelTab.height}, 0.04f, 10, Fade(BLACK, 0.08f));
@@ -270,8 +271,10 @@ void VeModalLichNhanVien(Vector2 mousePos, bool Clicked, QLNV *QL, bool &isOpenM
     DrawTextEx(myFont, isFT ? "Tổng ngày công" : "Tổng ca làm việc", {k1.x + 10, k1.y + 6}, 16, 1, Color{20, 120, 50, 255});
     double tongNgayCongFT = (double)cntDu * 1.0 + (double)cntNua * 0.5 + (double)cntOT * 1.0;
     ostringstream ossNCVal;
-    if (tongNgayCongFT == (int)tongNgayCongFT) ossNCVal << (int)tongNgayCongFT;
-    else ossNCVal << fixed << setprecision(1) << tongNgayCongFT;
+    if (tongNgayCongFT == (int)tongNgayCongFT)
+        ossNCVal << (int)tongNgayCongFT;
+    else
+        ossNCVal << fixed << setprecision(1) << tongNgayCongFT;
     string sCong = isFT ? (ossNCVal.str() + " công (" + to_string(cntDu) + " đủ, " + to_string(cntNua) + " nửa)") : (to_string(cntDu + cntNua) + " ca (" + to_string((int)sumGioChuan) + "h)");
     DrawTextEx(myFont, sCong.c_str(), {k1.x + 10, k1.y + 26}, 20, 1, Color{10, 100, 40, 255});
 
@@ -444,47 +447,37 @@ void Draw_Screen_CC_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     static int curDay = day;
     static int curMonth = month;
     static int curYear = year;
+    static bool isOpenMainCalendar = false;
+    static char searchNV[50] = "";
+    static int letterSearchNV = 0;
+    static bool isSearchNVActive = false;
+    static float scrollY = 0.0f;
+    static bool isOpenModal = false;
+    static Employee *selectedEmp = nullptr;
+    static bool isOpenModalLich = false;
+    static Employee *selectedLichEmp = nullptr;
+    static bool openedThisFrame = false;
+    static bool openedLichThisFrame = false;
+    static bool openedCalThisFrame = false;
+
     if (doReset)
     {
         curDay = day;
         curMonth = month;
         curYear = year;
-    }
-    static bool isOpenMainCalendar = false;
-    if (doReset)
         isOpenMainCalendar = false;
-    Date dateHienTai(curDay, curMonth, curYear);
-
-    static char searchNV[50] = "";
-    if (doReset)
         searchNV[0] = '\0';
-    static int letterSearchNV = 0;
-    if (doReset)
         letterSearchNV = 0;
-    static bool isSearchNVActive = false;
-    if (doReset)
         isSearchNVActive = false;
-
-    static float scrollY = 0.0f;
-    if (doReset)
         scrollY = 0.0f;
-    float scrollSpeed = 30.0f;
-
-    static bool isOpenModal = false;
-    if (doReset)
         isOpenModal = false;
-    static Employee *selectedEmp = nullptr;
-    if (doReset)
         selectedEmp = nullptr;
-    static bool isOpenModalLich = false;
-    if (doReset)
         isOpenModalLich = false;
-    static Employee *selectedLichEmp = nullptr;
-    if (doReset)
         selectedLichEmp = nullptr;
-    static bool openedThisFrame = false;
-    static bool openedLichThisFrame = false;
-    static bool openedCalThisFrame = false;
+    }
+
+    Date dateHienTai(curDay, curMonth, curYear);
+    float scrollSpeed = 30.0f;
     bool blockBackground = isOpenModal || isOpenModalLich || isOpenMainCalendar;
 
     // ================= 2. KHUNG NỀN TRẮNG CHÍNH =================
@@ -1219,47 +1212,37 @@ void Draw_Screen_CC_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     static int curDay = day;
     static int curMonth = month;
     static int curYear = year;
+    static bool isOpenMainCalendar = false;
+    static char searchNV[50] = "";
+    static int letterSearchNV = 0;
+    static bool isSearchNVActive = false;
+    static float scrollY = 0.0f;
+    static bool isOpenModal = false;
+    static Employee *selectedEmp = nullptr;
+    static bool isOpenModalLich = false;
+    static Employee *selectedLichEmp = nullptr;
+    static bool openedThisFrame = false;
+    static bool openedLichThisFrame = false;
+    static bool openedCalThisFrame = false;
+
     if (doReset)
     {
         curDay = day;
         curMonth = month;
         curYear = year;
-    }
-    static bool isOpenMainCalendar = false;
-    if (doReset)
         isOpenMainCalendar = false;
-    Date dateHienTai(curDay, curMonth, curYear);
-
-    static char searchNV[50] = "";
-    if (doReset)
         searchNV[0] = '\0';
-    static int letterSearchNV = 0;
-    if (doReset)
         letterSearchNV = 0;
-    static bool isSearchNVActive = false;
-    if (doReset)
         isSearchNVActive = false;
-
-    static float scrollY = 0.0f;
-    if (doReset)
         scrollY = 0.0f;
-    float scrollSpeed = 30.0f;
-
-    static bool isOpenModal = false;
-    if (doReset)
         isOpenModal = false;
-    static Employee *selectedEmp = nullptr;
-    if (doReset)
         selectedEmp = nullptr;
-    static bool isOpenModalLich = false;
-    if (doReset)
         isOpenModalLich = false;
-    static Employee *selectedLichEmp = nullptr;
-    if (doReset)
         selectedLichEmp = nullptr;
-    static bool openedThisFrame = false;
-    static bool openedLichThisFrame = false;
-    static bool openedCalThisFrame = false;
+    }
+
+    Date dateHienTai(curDay, curMonth, curYear);
+    float scrollSpeed = 30.0f;
     bool blockBackground = isOpenModal || isOpenModalLich || isOpenMainCalendar;
 
     // ================= 2. KHUNG NỀN TRẮNG CHÍNH =================

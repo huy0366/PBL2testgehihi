@@ -11,36 +11,51 @@ void Draw_Screen_PhongBan(Vector2 mousePos, bool Clicked, QLNV *QL)
     static int s_gen = 0; // reset trạng thái khi chuyển mục
     bool doReset = (s_gen != g_resetGen);
     s_gen = g_resetGen;
+
     static bool isMaPhongBanActive = false; // Trạng thái: ô có đang được click vào không
-    if (doReset)
-        isMaPhongBanActive = false;
     static bool isTenPhongBanActive = false; // Trạng thái: ô có đang được click vào không
-    if (doReset)
-        isTenPhongBanActive = false;
     static bool isOpenCalendar = false;
-    if (doReset)
-        isOpenCalendar = false;
     static bool OpenThem = false;
-    if (doReset)
-        OpenThem = false;
     static bool OpenSua = false;
-    if (doReset)
-        OpenSua = false;
     static List<PhongBan> *dsXoa = nullptr;
     static bool OpenXoa = false;
+    static bool needfill = false;
+    static bool hoiXoa = false;
+    static char MaPhongBanInput[50] = "\0"; // Chuỗi lưu ký tự người dùng gõ
+    static int letterCount_Ma = 0;
+    static char TenPhongBanInput[50] = "\0"; // Chuỗi lưu ký tự người dùng gõ
+    static int letterCount_Ten = 0;
+    static int day1 = day, month1 = month, year1 = year;
+    static bool isXacNhan = false;
+    static bool isHuy = false;
+    static float scrollY = 0.0f;
+    static string selectedPhongBan = "";
+
     if (doReset)
     {
+        isMaPhongBanActive = false;
+        isTenPhongBanActive = false;
+        isOpenCalendar = false;
+        OpenThem = false;
+        OpenSua = false;
         if (OpenXoa)
             delete dsXoa;
         dsXoa = nullptr;
         OpenXoa = false;
-    }
-    static bool needfill = false;
-    if (doReset)
         needfill = false;
-    static bool hoiXoa = false;
-    if (doReset)
         hoiXoa = false;
+        MaPhongBanInput[0] = '\0';
+        letterCount_Ma = 0;
+        TenPhongBanInput[0] = '\0';
+        letterCount_Ten = 0;
+        day1 = day;
+        month1 = month;
+        year1 = year;
+        isXacNhan = false;
+        isHuy = false;
+        scrollY = 0.0f;
+        selectedPhongBan = "";
+    }
 
     Rectangle panelBang1 = {330, 230, 1450.0f, 300.0f};
     DrawRectangleRounded({panelBang1.x + 3, panelBang1.y + 4, panelBang1.width, panelBang1.height}, 0.03f, 10, Fade(BLACK, 0.08f));
@@ -61,37 +76,18 @@ void Draw_Screen_PhongBan(Vector2 mousePos, bool Clicked, QLNV *QL)
     DrawTextureEx(a1, pa1, ra1, sa1, WHITE);
 
     Rectangle textMaPhongBan = {930, 330, 300, 40};
-    static char MaPhongBanInput[50] = "\0"; // Chuỗi lưu ký tự người dùng gõ
-    if (doReset)
-        MaPhongBanInput[0] = '\0';
-    static int letterCount_Ma = 0;
-    if (doReset)
-        letterCount_Ma = 0;
     DrawTextEx(myFont, "Mã Phòng Ban:", {700.0f, textMaPhongBan.y + 7}, 22, 1, Color{50, 60, 75, 255});
     bool maActive = OpenThem && isMaPhongBanActive;
     DrawRectangleRounded(textMaPhongBan, 0.3f, 6, maActive ? Color{248, 250, 252, 255} : (OpenSua ? Color{240, 243, 246, 255} : WHITE));
     DrawRectangleRoundedLinesEx(textMaPhongBan, 0.3f, 6, 1.5f, maActive ? Color{50, 100, 220, 255} : LIGHTGRAY);
 
     Rectangle textTenPhongBan = {textMaPhongBan.x, textMaPhongBan.y + 60, 300, 40};
-    static char TenPhongBanInput[50] = "\0"; // Chuỗi lưu ký tự người dùng gõ
-    if (doReset)
-        TenPhongBanInput[0] = '\0';
-    static int letterCount_Ten = 0;
-    if (doReset)
-        letterCount_Ten = 0;
     DrawTextEx(myFont, "Tên Phòng Ban:", {700.0f, textTenPhongBan.y + 7}, 22, 1, Color{50, 60, 75, 255});
     bool tenActive = (OpenThem || OpenSua) && isTenPhongBanActive;
     DrawRectangleRounded(textTenPhongBan, 0.3f, 6, tenActive ? Color{248, 250, 252, 255} : WHITE);
     DrawRectangleRoundedLinesEx(textTenPhongBan, 0.3f, 6, 1.5f, tenActive ? Color{50, 100, 220, 255} : LIGHTGRAY);
 
     Rectangle textNgayThanhLap = {textTenPhongBan.x, textTenPhongBan.y + 60, 300, 40};
-    static int day1 = day, month1 = month, year1 = year;
-    if (doReset)
-    {
-        day1 = day;
-        month1 = month;
-        year1 = year;
-    }
     DrawTextEx(myFont, "Ngày thành lập:", {700.0f, textNgayThanhLap.y + 7}, 22, 1, Color{50, 60, 75, 255});
     bool calActive = (OpenThem || OpenSua) && isOpenCalendar;
     DrawRectangleRounded(textNgayThanhLap, 0.3f, 6, calActive ? Color{248, 250, 252, 255} : WHITE);
@@ -162,13 +158,7 @@ void Draw_Screen_PhongBan(Vector2 mousePos, bool Clicked, QLNV *QL)
     Rectangle btnXoaPhongBan = {970, 940, 280, 50};
 
     Rectangle btnXacNhan = {350, 940, 230, 50};
-    static bool isXacNhan = false;
-    if (doReset)
-        isXacNhan = false;
     Rectangle btnHuy = {610, 940, 230, 50};
-    static bool isHuy = false;
-    if (doReset)
-        isHuy = false;
 
     Rectangle btnHuyXoa = {350, 940, 230, 50};
     Rectangle btnXacNhanXoa = {610, 940, 230, 50};
@@ -206,9 +196,6 @@ void Draw_Screen_PhongBan(Vector2 mousePos, bool Clicked, QLNV *QL)
     DrawRectangleRounded({panelBang2.x + 3, panelBang2.y + 4, panelBang2.width, panelBang2.height}, 0.03f, 10, Fade(BLACK, 0.08f));
     DrawRectangleRounded(panelBang2, 0.03f, 10, WHITE);
     DrawRectangleRoundedLinesEx(panelBang2, 0.03f, 10, 1.5f, Color{225, 230, 240, 255});
-    static float scrollY = 0.0f;
-    if (doReset)
-        scrollY = 0.0f;
     float scrollSpeed = 30.0f; // Tốc độ cuộn mỗi nấc chuột
 
     // Lấy thao tác lăn chuột và cộng dồn vào scrollY
@@ -261,9 +248,6 @@ void Draw_Screen_PhongBan(Vector2 mousePos, bool Clicked, QLNV *QL)
     int totalRows = 0;
 
     PhongBan *selPB = nullptr;
-    static string selectedPhongBan = "";
-    if (doReset)
-        selectedPhongBan = "";
     while (current != nullptr)
     {
         string mpb = current->Data->get_MaPhongBan();
@@ -603,35 +587,49 @@ void Draw_Screen_ChucVu(Vector2 mousePos, bool Clicked, QLNV *QL)
     s_gen = g_resetGen;
 
     static bool isMaChucVuActive = false;
-    if (doReset)
-        isMaChucVuActive = false;
     static bool isTenChucVuActive = false;
-    if (doReset)
-        isTenChucVuActive = false;
     static bool isPhucCapActive = false;
-    if (doReset)
-        isPhucCapActive = false;
     static bool OpenThem = false;
-    if (doReset)
-        OpenThem = false;
     static bool OpenSua = false;
-    if (doReset)
-        OpenSua = false;
     static List<ChucVu> *dsXoa = nullptr;
     static bool OpenXoa = false;
+    static bool needfill = false;
+    static bool hoiXoa = false;
+    static char MaChucVuInput[50] = "\0"; // Chuỗi lưu ký tự người dùng gõ
+    static int letterCount_Ma = 0;
+    static char TenChucVuInput[50] = "\0";
+    static int letterCount_Ten = 0;
+    static char PhuCapInput[50] = "\0";
+    static int letterCount_PhuCap = 0;
+    static bool isXacNhan = false;
+    static bool isHuy = false;
+    static float scrollY = 0.0f;
+    static string selectedMCV = "";
+
     if (doReset)
     {
+        isMaChucVuActive = false;
+        isTenChucVuActive = false;
+        isPhucCapActive = false;
+        OpenThem = false;
+        OpenSua = false;
         if (OpenXoa)
             delete dsXoa;
         dsXoa = nullptr;
         OpenXoa = false;
-    }
-    static bool needfill = false;
-    if (doReset)
         needfill = false;
-    static bool hoiXoa = false;
-    if (doReset)
         hoiXoa = false;
+        MaChucVuInput[0] = '\0';
+        letterCount_Ma = 0;
+        TenChucVuInput[0] = '\0';
+        letterCount_Ten = 0;
+        PhuCapInput[0] = '\0';
+        letterCount_PhuCap = 0;
+        isXacNhan = false;
+        isHuy = false;
+        scrollY = 0.0f;
+        selectedMCV = "";
+    }
 
     Rectangle panelBang1 = {330, 230, 1450.0f, 300.0f};
     DrawRectangleRounded({panelBang1.x + 3, panelBang1.y + 4, panelBang1.width, panelBang1.height}, 0.03f, 10, Fade(BLACK, 0.08f));
@@ -652,36 +650,18 @@ void Draw_Screen_ChucVu(Vector2 mousePos, bool Clicked, QLNV *QL)
     DrawTextureEx(a1, pa1, ra1, sa1, WHITE);
 
     Rectangle MaChucVu = {930, 330, 300, 40};
-    static char MaChucVuInput[50] = "\0"; // Chuỗi lưu ký tự người dùng gõ
-    if (doReset)
-        MaChucVuInput[0] = '\0';
-    static int letterCount_Ma = 0;
-    if (doReset)
-        letterCount_Ma = 0;
     DrawTextEx(myFont, "Mã Chức Vụ:", {700.0f, MaChucVu.y + 7}, 22, 1, Color{50, 60, 75, 255});
     bool maActive = OpenThem && isMaChucVuActive;
     DrawRectangleRounded(MaChucVu, 0.3f, 6, maActive ? Color{248, 250, 252, 255} : (OpenSua ? Color{240, 243, 246, 255} : WHITE));
     DrawRectangleRoundedLinesEx(MaChucVu, 0.3f, 6, 1.5f, maActive ? Color{50, 100, 220, 255} : LIGHTGRAY);
 
     Rectangle TenChucVu = {MaChucVu.x, MaChucVu.y + 60, 300, 40};
-    static char TenChucVuInput[50] = "\0";
-    if (doReset)
-        TenChucVuInput[0] = '\0';
-    static int letterCount_Ten = 0;
-    if (doReset)
-        letterCount_Ten = 0;
     DrawTextEx(myFont, "Tên Chức Vụ:", {700.0f, TenChucVu.y + 7}, 22, 1, Color{50, 60, 75, 255});
     bool tenActive = (OpenThem || OpenSua) && isTenChucVuActive;
     DrawRectangleRounded(TenChucVu, 0.3f, 6, tenActive ? Color{248, 250, 252, 255} : WHITE);
     DrawRectangleRoundedLinesEx(TenChucVu, 0.3f, 6, 1.5f, tenActive ? Color{50, 100, 220, 255} : LIGHTGRAY);
 
     Rectangle PhucCap = {TenChucVu.x, TenChucVu.y + 60, 300, 40};
-    static char PhuCapInput[50] = "\0";
-    if (doReset)
-        PhuCapInput[0] = '\0';
-    static int letterCount_PhuCap = 0;
-    if (doReset)
-        letterCount_PhuCap = 0;
     DrawTextEx(myFont, "Phụ Cấp:", {700.0f, PhucCap.y + 7}, 22, 1, Color{50, 60, 75, 255});
     bool pcActive = (OpenThem || OpenSua) && isPhucCapActive;
     DrawRectangleRounded(PhucCap, 0.3f, 6, pcActive ? Color{248, 250, 252, 255} : WHITE);
@@ -752,13 +732,7 @@ void Draw_Screen_ChucVu(Vector2 mousePos, bool Clicked, QLNV *QL)
     Rectangle btnXoa = {970, 940, 280, 50};
 
     Rectangle btnXacNhan = {350, 940, 230, 50};
-    static bool isXacNhan = false;
-    if (doReset)
-        isXacNhan = false;
     Rectangle btnHuy = {610, 940, 230, 50};
-    static bool isHuy = false;
-    if (doReset)
-        isHuy = false;
 
     Rectangle btnHuyXoa = {350, 940, 230, 50};
     Rectangle btnXacNhanXoa = {610, 940, 230, 50};
@@ -795,10 +769,6 @@ void Draw_Screen_ChucVu(Vector2 mousePos, bool Clicked, QLNV *QL)
     DrawRectangleRounded({panelBang2.x + 3, panelBang2.y + 4, panelBang2.width, panelBang2.height}, 0.03f, 10, Fade(BLACK, 0.08f));
     DrawRectangleRounded(panelBang2, 0.03f, 10, WHITE);
     DrawRectangleRoundedLinesEx(panelBang2, 0.03f, 10, 1.5f, Color{225, 230, 240, 255});
-    // 1. TẠO BIẾN CUỘN (Dùng 'static' để giữ nguyên giá trị qua mỗi khung hình)
-    static float scrollY = 0.0f;
-    if (doReset)
-        scrollY = 0.0f;
     float scrollSpeed = 30.0f; // Tốc độ cuộn mỗi nấc chuột
 
     // Lấy thao tác lăn chuột và cộng dồn vào scrollY
@@ -849,9 +819,6 @@ void Draw_Screen_ChucVu(Vector2 mousePos, bool Clicked, QLNV *QL)
     int totalRows = 0;
 
     ChucVu *selCV = nullptr;
-    static string selectedMCV = "";
-    if (doReset)
-        selectedMCV = "";
     while (current != nullptr)
     {
         string mcv = current->Data->get_MaChucVu();
@@ -1211,11 +1178,12 @@ void Draw_Screen_Deparment(QLNV *QL)
     bool doReset = (s_gen != g_menuGen);
     s_gen = g_menuGen;
     static bool isOpenPB = true;
-    if (doReset)
-        isOpenPB = true;
     static bool isOpenCV = false;
     if (doReset)
+    {
+        isOpenPB = true;
         isOpenCV = false;
+    }
     Vector2 mousePos = GetMousePosition();
     bool Clicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 

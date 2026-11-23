@@ -71,10 +71,10 @@ inline bool XuatBangLuongThang(QLNV *QL, int thang, int nam)
 // Kiểu nút chức năng chuẩn
 enum class NutStyle
 {
-    Green,     // Nút Thêm, Xác nhận
-    Blue,      // Nút Sửa, Lưu
-    Red,       // Nút Xóa, Xác nhận xóa
-    Secondary  // Nút Hủy, Hủy xóa
+    Green,    // Nút Thêm, Xác nhận
+    Blue,     // Nút Sửa, Lưu
+    Red,      // Nút Xóa, Xác nhận xóa
+    Secondary // Nút Hủy, Hủy xóa
 };
 
 // Hàm vẽ nút bấm hiện đại với icon sắc nét và hiệu ứng hover
@@ -292,7 +292,7 @@ inline void DrawSidebar(int &currentScreen)
         iconmenu[2] = LoadTexture("photo/icon/Asset-8.png");
         iconmenu[3] = LoadTexture("photo/icon/Asset-9.png");
         iconmenu[4] = LoadTexture("photo/icon/Asset-10.png");
-        iconmenu[5] = LoadTexture("photo/icon/Asset-12.png");
+        iconmenu[5] = LoadTexture("photo/icon/Asset-11.png");
         isLoaded = true;
     }
     Vector2 panhmenu = {-80.0f, -47.0f};

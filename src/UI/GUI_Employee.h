@@ -13,100 +13,77 @@ void Draw_Screen_NhanVien(Vector2 mousePos, bool Clicked, QLNV *QL)
     s_gen = g_resetGen;
 
     static bool clickThem = false;
-    if (doReset)
-        clickThem = false;
     static bool clickSua = false;
-    if (doReset)
-        clickSua = false;
     static bool isOpenDelete = false;
     static bool isOpenTable = false;
-    if (doReset)
-        isOpenTable = false;
     static bool needFill = false;
-    if (doReset)
-        needFill = false;
     static bool hoiXoa = false;
-    if (doReset)
-        hoiXoa = false;
     static bool openedTableThisFrame = false;
-    if (doReset)
-        openedTableThisFrame = false;
-    bool blockBackground = isOpenTable || hoiXoa;
-
+    static bool isOpenChiTiet = false;
+    static bool openedChiTietThisFrame = false;
     static List<Employee> *dsXoa = nullptr;
+    static string selectedMNV = "";
+    static bool isChucVuOpen = false;
+    static int selectedChucVuIndex = 0;
+    static bool isPhongOpen = false;
+    static int selectedPhongIndex = 0;
+    static bool isHoTenActive = false;
+    static char hoTenInput[50] = "\0";
+    static int letterCount = 0;
+    static int lastSortIdx = 0, lastSortTTIdx = 0;
+    static bool needSort = false;
+    static bool isSortOpen = false;
+    static int selectedSortIndex = 0;
+    static bool isSortTTOpen = false;
+    static int selectedSortTTIndex = 0;
+    static float scrollY = 0.0f;
+
     if (doReset)
     {
+        clickThem = false;
+        clickSua = false;
+        isOpenTable = false;
+        needFill = false;
+        hoiXoa = false;
+        openedTableThisFrame = false;
+        isOpenChiTiet = false;
+        openedChiTietThisFrame = false;
         if (isOpenDelete)
             delete dsXoa;
         dsXoa = nullptr;
         isOpenDelete = false;
-    }
-    static string selectedMNV = "";
-    if (doReset)
         selectedMNV = "";
+        isChucVuOpen = false;
+        selectedChucVuIndex = 0;
+        isPhongOpen = false;
+        selectedPhongIndex = 0;
+        isHoTenActive = false;
+        hoTenInput[0] = '\0';
+        letterCount = 0;
+        lastSortIdx = 0;
+        lastSortTTIdx = 0;
+        needSort = false;
+        isSortOpen = false;
+        selectedSortIndex = 0;
+        isSortTTOpen = false;
+        selectedSortTTIndex = 0;
+        scrollY = 0.0f;
+    }
+
+    bool blockBackground = isOpenTable || hoiXoa || isOpenChiTiet;
     string default_choice = "Tất cả";
     // MeNu
 
     Rectangle comboChucVu = {350, 290, 250, 45};
-    static bool isChucVuOpen = false;
-    if (doReset)
-        isChucVuOpen = false;
-    static int selectedChucVuIndex = 0;
-    if (doReset)
-        selectedChucVuIndex = 0;
-
     Rectangle comboPhong = {620, 290, 250, 45};
-    static bool isPhongOpen = false;
-    if (doReset)
-        isPhongOpen = false;
-    static int selectedPhongIndex = 0;
-    if (doReset)
-        selectedPhongIndex = 0;
-
     Rectangle textHoTen = {890, 290, 350, 45};
-    // Các biến cho ô nhập liệu Họ Tên
-    static bool isHoTenActive = false; // Trạng thái: ô có đang được click vào không
-    if (doReset)
-        isHoTenActive = false;
-    static char hoTenInput[50] = "\0"; // Chuỗi lưu ký tự người dùng gõ
-    if (doReset)
-        hoTenInput[0] = '\0';
-    static int letterCount = 0;
-    if (doReset)
-        letterCount = 0;
-
-    static int lastSortIdx = 0, lastSortTTIdx = 0;
-    if (doReset)
-    {
-        lastSortIdx = 0;
-        lastSortTTIdx = 0;
-    }
-    static bool needSort = false;
-    if (doReset)
-        needSort = false;
     Rectangle comboSort = {1290, 290, 250, 45};
-    static bool isSortOpen = false;
-    if (doReset)
-        isSortOpen = false;
-    static int selectedSortIndex = 0;
-    if (doReset)
-        selectedSortIndex = 0;
     string dsSort[] = {"...", "Mã NV", "Họ và Tên", "Ngày Sinh"};
     int nSort = 3;
 
     Rectangle comboSortTT = {1560, 290, 200, 45}; // thứ tự (a->z, z->a, tuổi ...)
-    static bool isSortTTOpen = false;
-    if (doReset)
-        isSortTTOpen = false;
-    static int selectedSortTTIndex = 0;
-    if (doReset)
-        selectedSortTTIndex = 0;
     string dsSortTT[] = {"...", "tăng dần", "giảm dần"};
     int nSortTT = 2;
-
-    static float scrollY = 0.0f;
-    if (doReset)
-        scrollY = 0.0f; // 1. TẠO BIẾN CUỘN (Dùng 'static' để giữ nguyên giá trị qua mỗi khung hình)
 
     // ============ 2. TÍNH TOÁN (chưa vẽ gì) ============
     float scrollSpeed = 30.0f; // Tốc độ cuộn mỗi nấc chuột
@@ -210,7 +187,7 @@ void Draw_Screen_NhanVien(Vector2 mousePos, bool Clicked, QLNV *QL)
 
     Rectangle listArea = {(float)startX, (float)listStartY, (float)(GetScreenWidth() - startX), (float)listHeight};
     // Chỉ hover khi bảng thông tin đóng, không có combo lọc đang mở, và chuột nằm trong vùng danh sách
-    bool canHover = !hoiXoa && !isOpenTable && !isChucVuOpen && !isPhongOpen && CheckCollisionPointRec(mousePos, listArea);
+    bool canHover = !hoiXoa && !isOpenTable && !isOpenChiTiet && !isChucVuOpen && !isPhongOpen && CheckCollisionPointRec(mousePos, listArea);
 
     // Tọa độ Y hiện tại bắt đầu = Tọa độ gốc + Độ lệch cuộn
     float currentY = listStartY + scrollY;
@@ -448,6 +425,28 @@ void Draw_Screen_NhanVien(Vector2 mousePos, bool Clicked, QLNV *QL)
         bool hoverXoa = !blockBackground && CheckCollisionPointRec(mousePos, btnXoaNhanSu);
         VeNutChucNang(btnXoaNhanSu, "Xóa nhân sự", NutStyle::Red, hoverXoa, 3);
 
+        Rectangle btnChiTiet = {1130, 940, 230, 50};
+        bool hoverChiTiet = !blockBackground && CheckCollisionPointRec(mousePos, btnChiTiet);
+        VeNutChucNang(btnChiTiet, "Xem chi tiết", NutStyle::Blue, hoverChiTiet, 0);
+
+        if (Clicked && !blockBackground && CheckCollisionPointRec(mousePos, btnChiTiet))
+        {
+            Employee *empCheck = selEmp;
+            if (empCheck == nullptr && !selectedMNV.empty())
+                empCheck = QL->TimTheoMa(selectedMNV);
+
+            if (empCheck != nullptr)
+            {
+                isOpenChiTiet = true;
+                openedChiTietThisFrame = true;
+                isHoTenActive = false; // Ngắt focus ô tìm kiếm
+            }
+            else
+            {
+                HienThongBao("Vui lòng chọn 1 nhân viên trong danh sách để xem chi tiết!", true);
+            }
+        }
+
         if (Clicked && !blockBackground && CheckCollisionPointRec(mousePos, btnThemNhanSu))
         {
             clickThem = true;
@@ -482,90 +481,69 @@ void Draw_Screen_NhanVien(Vector2 mousePos, bool Clicked, QLNV *QL)
         static int s_gen2 = 0; // reset trạng thái khi chuyển mục
         bool doReset2 = (s_gen2 != g_resetGen);
         s_gen2 = g_resetGen;
+
         static char MaNhanVienInput[50] = "";
-        if (doReset2)
-            MaNhanVienInput[0] = '\0';
         static char HovaTenInput[50] = "";
-        if (doReset2)
-            HovaTenInput[0] = '\0';
         static int letterCountHovaTen = 0;
-        if (doReset2)
-            letterCountHovaTen = 0;
         static bool isHovaTenActive = false;
-        if (doReset2)
-            isHovaTenActive = false;
 
         // Trạng thái đóng/mở của 6 ô Combobox
         static bool openGT = false;
-        if (doReset2)
-            openGT = false;
         static bool openPB = false;
-        if (doReset2)
-            openPB = false;
         static bool openCV = false;
-        if (doReset2)
-            openCV = false;
         static bool openLoai = false;
-        if (doReset2)
-            openLoai = false;
         static bool openVT = false;
-        if (doReset2)
-            openVT = false;
 
         // Vị trí mục đang chọn trong Combobox (-1 là chưa chọn)
         static int selGT = -1;
-        if (doReset2)
-            selGT = -1;
         static int selPB = -1;
-        if (doReset2)
-            selPB = -1;
         static int selCV = -1;
-        if (doReset2)
-            selCV = -1;
         static int selLoai = -1;
-        if (doReset2)
-            selLoai = -1;
         static int loaiGoc = -1;
-        if (doReset2)
-            loaiGoc = -1;
         static int selVT = -1;
-        if (doReset2)
-            selVT = -1;
 
         // Trạng thái và dữ liệu của 2 bảng Lịch (Ngày sinh & Ngày vào làm)
         static bool isOpenCalendarNS = false;
-        if (doReset2)
-            isOpenCalendarNS = false;
         static bool isOpenCalendarNVL = false;
-        if (doReset2)
-            isOpenCalendarNVL = false;
         static bool changeNS = false;
-        if (doReset2)
-            changeNS = false;
         static bool changeNVL = false;
-        if (doReset2)
-            changeNVL = false;
         static int dayNS = day, monthNS = month, yearNS = year;
+        static int dayNVL = day, monthNVL = month, yearNVL = year;
+
+        static bool daSinhMa = false;
+        static string thongBaoLoi = "";
+
         if (doReset2)
         {
+            MaNhanVienInput[0] = '\0';
+            HovaTenInput[0] = '\0';
+            letterCountHovaTen = 0;
+            isHovaTenActive = false;
+            openGT = false;
+            openPB = false;
+            openCV = false;
+            openLoai = false;
+            openVT = false;
+            selGT = -1;
+            selPB = -1;
+            selCV = -1;
+            selLoai = -1;
+            loaiGoc = -1;
+            selVT = -1;
+            isOpenCalendarNS = false;
+            isOpenCalendarNVL = false;
+            changeNS = false;
+            changeNVL = false;
             dayNS = day;
             monthNS = month;
             yearNS = year;
-        }
-        static int dayNVL = day, monthNVL = month, yearNVL = year;
-        if (doReset2)
-        {
             dayNVL = day;
             monthNVL = month;
             yearNVL = year;
+            daSinhMa = false;
+            thongBaoLoi = "";
         }
 
-        static bool daSinhMa = false;
-        if (doReset2)
-            daSinhMa = false;
-        static string thongBaoLoi = "";
-        if (doReset2)
-            thongBaoLoi = "";
         bool dongBang = false; // Cờ đánh dấu khi cần đóng và reset bảng
         bool hienLoai = clickThem || (clickSua && loaiGoc == 1);
 
@@ -1037,8 +1015,119 @@ void Draw_Screen_NhanVien(Vector2 mousePos, bool Clicked, QLNV *QL)
     }
     DrawTextEx(myFont, ("Tổng nhân viên: " + to_string(QL->get_DB()->get_ListEmployee()->get_size())).c_str(), {1550, 960}, 20, 1, DARKGRAY);
 
+    // ============ MODAL POPUP: CHI TIẾT NHÂN VIÊN ============
+    Employee *empTarget = selEmp;
+    if (empTarget == nullptr && !selectedMNV.empty())
+        empTarget = QL->TimTheoMa(selectedMNV);
+
+    if (isOpenChiTiet && empTarget != nullptr)
+    {
+        float screenW = GetScreenWidth();
+        float screenH = GetScreenHeight();
+
+        // 1. Lớp phủ đen mờ che nền
+        DrawRectangle(0, 0, screenW, screenH, Fade(BLACK, 0.45f));
+
+        // 2. Kích thước & Hộp thoại modal
+        float modalW = 620.0f;
+        float modalH = 570.0f;
+        Rectangle modal = {(screenW - modalW) / 2.0f, (screenH - modalH) / 2.0f, modalW, modalH};
+
+        DrawRectangleRounded({modal.x + 4, modal.y + 6, modal.width, modal.height}, 0.035f, 10, Fade(BLACK, 0.16f));
+        DrawRectangleRounded(modal, 0.035f, 10, WHITE);
+        DrawRectangleRoundedLinesEx(modal, 0.035f, 10, 1.5f, Color{220, 228, 245, 255});
+
+        // 3. Header Modal
+        DrawRectangleRounded({modal.x + 36, modal.y + 24, 7, 32}, 0.5f, 4, Color{55, 105, 225, 255});
+        DrawTextEx(myFont, "Thông Tin Nhân Viên", {modal.x + 54, modal.y + 22}, 28, 1, Color{25, 35, 60, 255});
+
+        string subTitle = empTarget->get_name() + " (" + empTarget->get_mnv() + ")";
+        DrawTextEx(myFont, subTitle.c_str(), {modal.x + 36, modal.y + 62}, 22, 1, Color{100, 115, 135, 255});
+
+        // Tag FullTime / PartTime
+        string loaiNV = empTarget->get_LoaiNV();
+        Color bgTag = (loaiNV == "FullTime") ? Color{235, 248, 240, 255} : Color{254, 243, 230, 255};
+        Color txtTag = (loaiNV == "FullTime") ? Color{34, 160, 88, 255} : Color{217, 119, 6, 255};
+        Color borderTag = (loaiNV == "FullTime") ? Color{180, 230, 200, 255} : Color{250, 205, 155, 255};
+        Vector2 tagSize = MeasureTextEx(myFont, loaiNV.c_str(), 20, 1);
+        Rectangle tagRect = {modal.x + modal.width - 170, modal.y + 24, tagSize.x + 20, 30};
+        DrawRectangleRounded(tagRect, 0.4f, 6, bgTag);
+        DrawRectangleRoundedLinesEx(tagRect, 0.4f, 6, 1.2f, borderTag);
+        DrawTextEx(myFont, loaiNV.c_str(), {tagRect.x + 10, tagRect.y + 5}, 20, 1, txtTag);
+
+        // Nút đóng [X]
+        Rectangle btnXModal = {modal.x + modal.width - 50, modal.y + 22, 32, 32};
+        bool hoverX = CheckCollisionPointRec(mousePos, btnXModal);
+        DrawRectangleRounded(btnXModal, 0.3f, 6, hoverX ? Color{254, 226, 226, 255} : Color{245, 246, 250, 255});
+        DrawRectangleRoundedLinesEx(btnXModal, 0.3f, 6, 1.2f, hoverX ? Color{248, 113, 113, 255} : Color{225, 230, 240, 255});
+        Color colX = hoverX ? Color{220, 38, 38, 255} : DARKGRAY;
+        DrawLineEx({btnXModal.x + 9, btnXModal.y + 9}, {btnXModal.x + 23, btnXModal.y + 23}, 2.0f, colX);
+        DrawLineEx({btnXModal.x + 23, btnXModal.y + 9}, {btnXModal.x + 9, btnXModal.y + 23}, 2.0f, colX);
+
+        // Vạch phân cách
+        DrawLine(modal.x + 36, modal.y + 96, modal.x + modal.width - 36, modal.y + 96, Color{230, 236, 248, 255});
+
+        // 4. Danh sách các trường thông tin nhân sự
+        struct ChiTietDong
+        {
+            string label;
+            string value;
+        };
+
+        string phongStr = empTarget->get_PhongBan() ? empTarget->get_PhongBan()->get_TenPhongBan() : "Chưa phân bổ";
+        string cvStr = empTarget->get_ChucVu() ? empTarget->get_ChucVu()->get_TenChucVu() : "Chưa có";
+        string vtStr = empTarget->get_ViTri() ? empTarget->get_ViTri()->get_TenVTVL() : "Chưa có";
+        int tuoi = max(0, year - empTarget->get_NgaySinh().get_year());
+        int thamNien = max(0, year - empTarget->get_NgayLamViec().get_year());
+
+        ChiTietDong dsDong[] = {
+            {"Mã nhân viên", empTarget->get_mnv()},
+            {"Họ và tên", empTarget->get_name()},
+            {"Giới tính", empTarget->get_sex()},
+            {"Ngày sinh", empTarget->get_NgaySinh().ToString() + " (" + to_string(tuoi) + " tuổi)"},
+            {"Phòng ban", phongStr},
+            {"Chức vụ", cvStr},
+            {"Vị trí việc làm", vtStr},
+            {"Bậc vị trí", "Bậc " + to_string(empTarget->get_BacViTri())},
+            {"Ngày vào làm", empTarget->get_NgayLamViec().ToString()},
+            {"Thâm niên công tác", to_string(thamNien) + " năm"}};
+        int soDong = sizeof(dsDong) / sizeof(dsDong[0]);
+
+        float leftX = modal.x + 40;
+        float rightX = modal.x + modal.width - 40;
+        float rowY = modal.y + 110;
+        float rowH = 38.0f;
+        int fontSizeLabel = 23;
+        int fontSizeVal = 24;
+
+        for (int i = 0; i < soDong; i++)
+        {
+            if (i % 2 == 1)
+                DrawRectangleRounded({modal.x + 30, rowY - 4, modal.width - 60, rowH}, 0.2f, 4, Color{248, 250, 254, 255});
+            DrawTextEx(myFont, dsDong[i].label.c_str(), {leftX, rowY + 3}, fontSizeLabel, 1, Color{85, 95, 115, 255});
+            float valW = MeasureTextEx(myFont, dsDong[i].value.c_str(), fontSizeVal, 1).x;
+            DrawTextEx(myFont, dsDong[i].value.c_str(), {rightX - valW, rowY + 3}, fontSizeVal, 1, Color{25, 35, 50, 255});
+            rowY += rowH;
+        }
+
+        // 5. Nút đóng modal dưới cùng
+        Rectangle btnDongDuoi = {modal.x + (modal.width - 160) / 2.0f, modal.y + modal.height - 54, 160, 42};
+        bool hoverDongDuoi = CheckCollisionPointRec(mousePos, btnDongDuoi);
+        VeNutChucNang(btnDongDuoi, "Đóng", NutStyle::Secondary, hoverDongDuoi, 5);
+
+        // Sự kiện click đóng modal
+        if (Clicked && !openedChiTietThisFrame)
+        {
+            if (hoverX || hoverDongDuoi || !CheckCollisionPointRec(mousePos, modal))
+            {
+                isOpenChiTiet = false;
+            }
+        }
+    }
+
     openedTableThisFrame = false;
-    g_isModalActive = (isOpenTable || hoiXoa);
+    openedChiTietThisFrame = false;
+    g_isModalActive = (isOpenTable || hoiXoa || isOpenChiTiet);
 }
 
 void Draw_Screen_VTVL(Vector2 mousePos, bool Clicked, QLNV *QL)
@@ -1048,30 +1137,43 @@ void Draw_Screen_VTVL(Vector2 mousePos, bool Clicked, QLNV *QL)
     s_gen = g_resetGen;
 
     static bool isMaVTActive = false;  // Trạng thái: ô có đang được click vào không
-    if (doReset)
-        isMaVTActive = false;
     static bool isTenVTActive = false; // Trạng thái: ô có đang được click vào không
-    if (doReset)
-        isTenVTActive = false;
     static bool OpenThem = false;
-    if (doReset)
-        OpenThem = false;
     static bool OpenSua = false;
-    if (doReset)
-        OpenSua = false;
     static List<ViTriViecLam> *dsXoa = nullptr;
     static bool OpenXoa = false;
+    static bool needfill = false;
+    static bool hoiXoa = false;
+    static char MaVTInput[50] = "\0"; // Chuỗi lưu ký tự người dùng gõ
+    static int letterCount_Ma = 0;
+    static char TenVTInput[50] = "\0"; // Chuỗi lưu ký tự người dùng gõ
+    static int letterCount_Ten = 0;
+    static bool isXacNhan = false;
+    static bool isHuy = false;
+    static float scrollY = 0.0f;
+    static string selectedPhongBan = "";
+
     if (doReset)
     {
+        isMaVTActive = false;
+        isTenVTActive = false;
+        OpenThem = false;
+        OpenSua = false;
         if (OpenXoa)
             delete dsXoa;
         dsXoa = nullptr;
         OpenXoa = false;
-    }
-    static bool needfill = false;
-    if (doReset)
         needfill = false;
-    static bool hoiXoa = false;
+        hoiXoa = false;
+        MaVTInput[0] = '\0';
+        letterCount_Ma = 0;
+        TenVTInput[0] = '\0';
+        letterCount_Ten = 0;
+        isXacNhan = false;
+        isHuy = false;
+        scrollY = 0.0f;
+        selectedPhongBan = "";
+    }
 
     Rectangle panelBang1 = {330, 230, 1450.0f, 280.0f};
     DrawRectangleRounded({panelBang1.x + 3, panelBang1.y + 4, panelBang1.width, panelBang1.height}, 0.03f, 10, Fade(BLACK, 0.08f));
@@ -1092,24 +1194,12 @@ void Draw_Screen_VTVL(Vector2 mousePos, bool Clicked, QLNV *QL)
     DrawTextureEx(a1, pa1, ra1, sa1, WHITE);
 
     Rectangle textMaVT = {850, 350, 300, 40};
-    static char MaVTInput[50] = "\0"; // Chuỗi lưu ký tự người dùng gõ
-    if (doReset)
-        MaVTInput[0] = '\0';
-    static int letterCount_Ma = 0;
-    if (doReset)
-        letterCount_Ma = 0;
     DrawTextEx(myFont, "Mã vị trí:", {700.0f, 357.0f}, 22, 1, Color{50, 60, 75, 255});
     bool maActive = OpenThem && isMaVTActive;
     DrawRectangleRounded(textMaVT, 0.3f, 6, maActive ? Color{248, 250, 252, 255} : (OpenSua ? Color{240, 243, 246, 255} : WHITE));
     DrawRectangleRoundedLinesEx(textMaVT, 0.3f, 6, 1.5f, maActive ? Color{50, 100, 220, 255} : LIGHTGRAY);
 
     Rectangle textTenVT = {850, 420, 300, 40};
-    static char TenVTInput[50] = "\0"; // Chuỗi lưu ký tự người dùng gõ
-    if (doReset)
-        TenVTInput[0] = '\0';
-    static int letterCount_Ten = 0;
-    if (doReset)
-        letterCount_Ten = 0;
     DrawTextEx(myFont, "Tên vị trí:", {700.0f, 427.0f}, 22, 1, Color{50, 60, 75, 255});
     bool tenActive = (OpenThem || OpenSua) && isTenVTActive;
     DrawRectangleRounded(textTenVT, 0.3f, 6, tenActive ? Color{248, 250, 252, 255} : WHITE);
@@ -1158,14 +1248,7 @@ void Draw_Screen_VTVL(Vector2 mousePos, bool Clicked, QLNV *QL)
     Rectangle btnXoaViTri = {870, 940, 230, 50};
 
     Rectangle btnXacNhan = {350, 940, 230, 50};
-    static bool isXacNhan = false;
-    if (doReset)
-        isXacNhan = false;
-
     Rectangle btnHuy = {610, 940, 230, 50};
-    static bool isHuy = false;
-    if (doReset)
-        isHuy = false;
 
     Rectangle btnHuyXoa = {350, 940, 230, 50};
     Rectangle btnXacNhanXoa = {610, 940, 230, 50};
@@ -1203,9 +1286,6 @@ void Draw_Screen_VTVL(Vector2 mousePos, bool Clicked, QLNV *QL)
     DrawRectangleRounded({panelBang2.x + 3, panelBang2.y + 4, panelBang2.width, panelBang2.height}, 0.03f, 10, Fade(BLACK, 0.08f));
     DrawRectangleRounded(panelBang2, 0.03f, 10, WHITE);
     DrawRectangleRoundedLinesEx(panelBang2, 0.03f, 10, 1.5f, Color{225, 230, 240, 255});
-    static float scrollY = 0.0f;
-    if (doReset)
-        scrollY = 0.0f;
     float scrollSpeed = 30.0f; // Tốc độ cuộn mỗi nấc chuột
 
     // Lấy thao tác lăn chuột và cộng dồn vào scrollY
@@ -1255,9 +1335,6 @@ void Draw_Screen_VTVL(Vector2 mousePos, bool Clicked, QLNV *QL)
     int totalRows = 0;
 
     ViTriViecLam *selVT = nullptr;
-    static string selectedPhongBan = "";
-    if (doReset)
-        selectedPhongBan = "";
     while (current != nullptr)
     {
         string mpb = current->Data->get_MaVTVL();
@@ -1582,11 +1659,12 @@ void Draw_Screen_Employee(QLNV *QL)
     bool doReset = (s_gen != g_menuGen);
     s_gen = g_menuGen;
     static bool isOpenNV = true;
-    if (doReset)
-        isOpenNV = true;
     static bool isOpenVT = false;
     if (doReset)
+    {
+        isOpenNV = true;
         isOpenVT = false;
+    }
     Vector2 mousePos = GetMousePosition();
     bool Clicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 
@@ -1640,4 +1718,3 @@ void Draw_Screen_Employee(QLNV *QL)
         Draw_Screen_VTVL(mousePos, Clicked, QL);
     }
 }
-

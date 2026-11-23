@@ -37,11 +37,6 @@ void DrawMainContent(int &currentScreen, QLNV *QL)
     {
         Draw_Screen_ChamCong(QL);
     }
-    else
-    {
-        delete QL;
-        CloseWindow();
-    }
 }
 
 // ================= HÀM MAIN CHÍNH =================
@@ -75,8 +70,11 @@ int main()
         ClearBackground(RAYWHITE);
 
         DrawSidebar(currentScreen);
-        DrawMainContent(currentScreen, QL);
-        VeThongBao();
+        if (currentScreen != Exit)
+        {
+            DrawMainContent(currentScreen, QL);
+            VeThongBao();
+        }
 
         EndDrawing();
     }
