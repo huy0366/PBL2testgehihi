@@ -534,25 +534,28 @@ void Draw_Screen_CC_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     DrawTextEx(myFont, "Điểm danh tất cả", {btnAllDu.x + 28, btnAllDu.y + 8}, 22, 1, WHITE);
     if (Clicked && !blockBackground && CheckCollisionPointRec(mousePos, btnAllDu))
     {
-        for (Node<Employee> *p = QL->get_DB()->get_ListEmployee()->get_header()->Next; p != nullptr; p = p->Next)
+        try
         {
-            if (!p->Data || p->Data->get_LoaiNV() != "FullTime")
-                continue;
-            ChamCong *cc = QL->get_DB()->FindCC(p->Data->get_mnv(), dateHienTai);
-            if (cc)
+            ChamCong::KiemTraNgayHopLe(dateHienTai);
+            for (Node<Employee> *p = QL->get_DB()->get_ListEmployee()->get_header()->Next; p != nullptr; p = p->Next)
             {
-                cc->set_TrangThai(1);
-                cc->set_SoGio(8.0);
+                if (!p->Data || p->Data->get_LoaiNV() != "FullTime")
+                    continue;
+                QL->ChamCongNhanVien(p->Data, dateHienTai, 1, 8.0, "Đúng giờ");
             }
-            else
-            {
-                QL->get_DB()->Insert(new ChamCong(p->Data, dateHienTai, 1, 8.0, "Đúng giờ"));
-            }
+            QL->get_DB()->SaveFileChamCong();
+            QL->DongBoChamCong(curMonth, curYear);
+            QL->get_DB()->SaveFileEmployee();
+            HienThongBao("Đã điểm danh tất cả Full-Time Có Mặt!", false);
         }
-        QL->get_DB()->SaveFileChamCong();
-        QL->DongBoChamCong(curMonth, curYear);
-        QL->get_DB()->SaveFileEmployee();
-        HienThongBao("Đã điểm danh tất cả Full-Time Có Mặt!", false);
+        catch (const string &ex)
+        {
+            HienThongBao(ex, true);
+        }
+        catch (const char *ex)
+        {
+            HienThongBao(ex, true);
+        }
     }
 
     // Nút "Chốt công -> Bảng Lương"
@@ -819,7 +822,29 @@ void Draw_Screen_CC_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     if (isOpenMainCalendar && !isOpenModal && !isOpenModalLich)
     {
         Rectangle calRec = {btnMainCal.x, btnMainCal.y + 12, btnMainCal.width, btnMainCal.height};
-        DrawCalendar(mousePos, curDay, curMonth, curYear, calRec, isOpenMainCalendar);
+        if (DrawCalendar(mousePos, curDay, curMonth, curYear, calRec, isOpenMainCalendar))
+        {
+            try
+            {
+                ChamCong::KiemTraNgayHopLe(Date(curDay, curMonth, curYear));
+            }
+            catch (const string &ex)
+            {
+                HienThongBao(ex, true);
+                Date nowD = Date::DateHienTai();
+                curDay = nowD.get_day();
+                curMonth = nowD.get_month();
+                curYear = nowD.get_year();
+            }
+            catch (const char *ex)
+            {
+                HienThongBao(ex, true);
+                Date nowD = Date::DateHienTai();
+                curDay = nowD.get_day();
+                curMonth = nowD.get_month();
+                curYear = nowD.get_year();
+            }
+        }
     }
 
     // ================= 8. MODAL SỬA CHẤM CÔNG FULL-TIME =================
@@ -1066,37 +1091,41 @@ void Draw_Screen_CC_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
         // Xử lý Cập nhật (Full-Time: số giờ mặc định 8.0h, nửa công 4.0h, nghỉ phép/vắng 0.0h, OT lấy từ modalGioOT)
         if (Clicked && !isOpenModalCalendar && CheckCollisionPointRec(mousePos, btnSubmit))
         {
-            double g = 8.0;
-            if (modalTrangThai == 2)
-                g = 4.0;
-            else if (modalTrangThai == 3 || modalTrangThai == 4)
-                g = 0.0;
-            else if (modalTrangThai == 5)
+            try
             {
-                g = atof(modalGioOT);
-                if (g <= 0.0)
-                    g = 2.0;
+                Date dCanSua(modalDay, modalMonth, modalYear);
+                ChamCong::KiemTraNgayHopLe(dCanSua);
+
+                double g = 8.0;
+                if (modalTrangThai == 2)
+                    g = 4.0;
+                else if (modalTrangThai == 3 || modalTrangThai == 4)
+                    g = 0.0;
+                else if (modalTrangThai == 5)
+                {
+                    g = atof(modalGioOT);
+                    if (g <= 0.0)
+                        g = 2.0;
+                }
+
+                QL->ChamCongNhanVien(selectedEmp, dCanSua, modalTrangThai, g, modalGhiChu);
+                QL->get_DB()->SaveFileChamCong();
+                QL->DongBoChamCong(dCanSua.get_month(), dCanSua.get_year());
+                QL->get_DB()->SaveFileEmployee();
+                HienThongBao("Cập nhật chấm công Full-Time thành công!", false);
+                isOpenModal = false;
+                lastModalEmp = nullptr;
+                isModalGioOTActive = false;
+                isModalGhiChuActive = false;
             }
-            Date dCanSua(modalDay, modalMonth, modalYear);
-            ChamCong *ccCurrent = QL->get_DB()->FindCC(selectedEmp->get_mnv(), dCanSua);
-            if (ccCurrent)
+            catch (const string &ex)
             {
-                ccCurrent->set_TrangThai(modalTrangThai);
-                ccCurrent->set_SoGio(g);
-                ccCurrent->set_GhiChu(modalGhiChu);
+                HienThongBao(ex, true);
             }
-            else
+            catch (const char *ex)
             {
-                QL->get_DB()->Insert(new ChamCong(selectedEmp, dCanSua, modalTrangThai, g, modalGhiChu));
+                HienThongBao(ex, true);
             }
-            QL->get_DB()->SaveFileChamCong();
-            QL->DongBoChamCong(dCanSua.get_month(), dCanSua.get_year());
-            QL->get_DB()->SaveFileEmployee();
-            HienThongBao("Cập nhật chấm công Full-Time thành công!", false);
-            isOpenModal = false;
-            lastModalEmp = nullptr;
-            isModalGioOTActive = false;
-            isModalGhiChuActive = false;
         }
 
         // Xử lý Hủy
@@ -1115,6 +1144,27 @@ void Draw_Screen_CC_FullTime(Vector2 mousePos, bool Clicked, QLNV *QL)
             bool changed = DrawCalendar(mousePos, modalDay, modalMonth, modalYear, modalCalRec, isOpenModalCalendar);
             if (changed)
             {
+                try
+                {
+                    ChamCong::KiemTraNgayHopLe(Date(modalDay, modalMonth, modalYear));
+                }
+                catch (const string &ex)
+                {
+                    HienThongBao(ex, true);
+                    Date nowD = Date::DateHienTai();
+                    modalDay = nowD.get_day();
+                    modalMonth = nowD.get_month();
+                    modalYear = nowD.get_year();
+                }
+                catch (const char *ex)
+                {
+                    HienThongBao(ex, true);
+                    Date nowD = Date::DateHienTai();
+                    modalDay = nowD.get_day();
+                    modalMonth = nowD.get_month();
+                    modalYear = nowD.get_year();
+                }
+
                 ChamCong *ccNew = QL->get_DB()->FindCC(selectedEmp->get_mnv(), Date(modalDay, modalMonth, modalYear));
                 if (ccNew)
                 {
@@ -1259,25 +1309,28 @@ void Draw_Screen_CC_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     DrawTextEx(myFont, "Điểm danh tất cả", {btnAllDu.x + 28, btnAllDu.y + 8}, 22, 1, WHITE);
     if (Clicked && !blockBackground && CheckCollisionPointRec(mousePos, btnAllDu))
     {
-        for (Node<Employee> *p = QL->get_DB()->get_ListEmployee()->get_header()->Next; p != nullptr; p = p->Next)
+        try
         {
-            if (!p->Data || p->Data->get_LoaiNV() != "PartTime")
-                continue;
-            ChamCong *cc = QL->get_DB()->FindCC(p->Data->get_mnv(), dateHienTai);
-            if (cc)
+            ChamCong::KiemTraNgayHopLe(dateHienTai);
+            for (Node<Employee> *p = QL->get_DB()->get_ListEmployee()->get_header()->Next; p != nullptr; p = p->Next)
             {
-                cc->set_TrangThai(1);
-                cc->set_SoGio(4.0);
+                if (!p->Data || p->Data->get_LoaiNV() != "PartTime")
+                    continue;
+                QL->ChamCongNhanVien(p->Data, dateHienTai, 1, 4.0, "Đúng ca");
             }
-            else
-            {
-                QL->get_DB()->Insert(new ChamCong(p->Data, dateHienTai, 1, 4.0, "Đúng giờ"));
-            }
+            QL->get_DB()->SaveFileChamCong();
+            QL->DongBoChamCong(curMonth, curYear);
+            QL->get_DB()->SaveFileEmployee();
+            HienThongBao("Đã điểm danh tất cả Part-Time Có Mặt (4.0h)!", false);
         }
-        QL->get_DB()->SaveFileChamCong();
-        QL->DongBoChamCong(curMonth, curYear);
-        QL->get_DB()->SaveFileEmployee();
-        HienThongBao("Đã điểm danh tất cả Part-Time Có Mặt (4.0h)!", false);
+        catch (const string &ex)
+        {
+            HienThongBao(ex, true);
+        }
+        catch (const char *ex)
+        {
+            HienThongBao(ex, true);
+        }
     }
 
     // Nút "Chốt giờ -> Bảng Lương"
@@ -1539,7 +1592,29 @@ void Draw_Screen_CC_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
     if (isOpenMainCalendar && !isOpenModal && !isOpenModalLich)
     {
         Rectangle calRec = {btnMainCal.x, btnMainCal.y + 12, btnMainCal.width, btnMainCal.height};
-        DrawCalendar(mousePos, curDay, curMonth, curYear, calRec, isOpenMainCalendar);
+        if (DrawCalendar(mousePos, curDay, curMonth, curYear, calRec, isOpenMainCalendar))
+        {
+            try
+            {
+                ChamCong::KiemTraNgayHopLe(Date(curDay, curMonth, curYear));
+            }
+            catch (const string &ex)
+            {
+                HienThongBao(ex, true);
+                Date nowD = Date::DateHienTai();
+                curDay = nowD.get_day();
+                curMonth = nowD.get_month();
+                curYear = nowD.get_year();
+            }
+            catch (const char *ex)
+            {
+                HienThongBao(ex, true);
+                Date nowD = Date::DateHienTai();
+                curDay = nowD.get_day();
+                curMonth = nowD.get_month();
+                curYear = nowD.get_year();
+            }
+        }
     }
 
     // ================= 8. MODAL SỬA CHẤM CÔNG PART-TIME =================
@@ -1759,25 +1834,28 @@ void Draw_Screen_CC_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
         // Xử lý Cập nhật (Part-Time: lấy số giờ từ ô nhập atof(modalGio), nghỉ phép/vắng 0.0h)
         if (Clicked && !isOpenModalCalendar && CheckCollisionPointRec(mousePos, btnSubmit))
         {
-            double g = (modalTrangThai == 3 || modalTrangThai == 4) ? 0.0 : atof(modalGio);
-            Date dCanSua(modalDay, modalMonth, modalYear);
-            ChamCong *ccCurrent = QL->get_DB()->FindCC(selectedEmp->get_mnv(), dCanSua);
-            if (ccCurrent)
+            try
             {
-                ccCurrent->set_TrangThai(modalTrangThai);
-                ccCurrent->set_SoGio(g);
-                ccCurrent->set_GhiChu(modalGhiChu);
+                Date dCanSua(modalDay, modalMonth, modalYear);
+                ChamCong::KiemTraNgayHopLe(dCanSua);
+
+                double g = (modalTrangThai == 3 || modalTrangThai == 4) ? 0.0 : atof(modalGio);
+                QL->ChamCongNhanVien(selectedEmp, dCanSua, modalTrangThai, g, modalGhiChu);
+                QL->get_DB()->SaveFileChamCong();
+                QL->DongBoChamCong(dCanSua.get_month(), dCanSua.get_year());
+                QL->get_DB()->SaveFileEmployee();
+                HienThongBao("Cập nhật chấm công Part-Time thành công!", false);
+                isOpenModal = false;
+                lastModalEmp = nullptr;
             }
-            else
+            catch (const string &ex)
             {
-                QL->get_DB()->Insert(new ChamCong(selectedEmp, dCanSua, modalTrangThai, g, modalGhiChu));
+                HienThongBao(ex, true);
             }
-            QL->get_DB()->SaveFileChamCong();
-            QL->DongBoChamCong(dCanSua.get_month(), dCanSua.get_year());
-            QL->get_DB()->SaveFileEmployee();
-            HienThongBao("Cập nhật chấm công Part-Time thành công!", false);
-            isOpenModal = false;
-            lastModalEmp = nullptr;
+            catch (const char *ex)
+            {
+                HienThongBao(ex, true);
+            }
         }
 
         // Xử lý Hủy
@@ -1794,6 +1872,27 @@ void Draw_Screen_CC_PartTime(Vector2 mousePos, bool Clicked, QLNV *QL)
             bool changed = DrawCalendar(mousePos, modalDay, modalMonth, modalYear, modalCalRec, isOpenModalCalendar);
             if (changed)
             {
+                try
+                {
+                    ChamCong::KiemTraNgayHopLe(Date(modalDay, modalMonth, modalYear));
+                }
+                catch (const string &ex)
+                {
+                    HienThongBao(ex, true);
+                    Date nowD = Date::DateHienTai();
+                    modalDay = nowD.get_day();
+                    modalMonth = nowD.get_month();
+                    modalYear = nowD.get_year();
+                }
+                catch (const char *ex)
+                {
+                    HienThongBao(ex, true);
+                    Date nowD = Date::DateHienTai();
+                    modalDay = nowD.get_day();
+                    modalMonth = nowD.get_month();
+                    modalYear = nowD.get_year();
+                }
+
                 ChamCong *ccNew = QL->get_DB()->FindCC(selectedEmp->get_mnv(), Date(modalDay, modalMonth, modalYear));
                 if (ccNew)
                 {

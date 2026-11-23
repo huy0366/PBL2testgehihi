@@ -133,6 +133,7 @@ public:
     double TinhGioLamThang(Employee *e, int thang, int nam, double &gioOT) const;
     long long TinhLuongThang(Employee *e, int thang, int nam, double &cong_hoac_gio, double &gioOT, long long &tienOT) const;
     long long TinhLuongThang(Employee *e, int thang, int nam) const;
+    bool ChamCongNhanVien(Employee *e, const Date &d, int tt, double gio, const string &gc);
     void DongBoChamCong(int thang, int nam);
     bool DaChotLuongThang(int thang, int nam) const;
     bool XuatBangLuongThang(int thang, int nam);
@@ -931,6 +932,28 @@ inline long long QLNV::TinhLuongThang(Employee *e, int thang, int nam) const
     double cong_hoac_gio = 0.0, gioOT = 0.0;
     long long tienOT = 0;
     return this->TinhLuongThang(e, thang, nam, cong_hoac_gio, gioOT, tienOT);
+}
+
+inline bool QLNV::ChamCongNhanVien(Employee *e, const Date &d, int tt, double gio, const string &gc)
+{
+    if (e == nullptr)
+        throw string("Lỗi: Không tìm thấy nhân viên cần chấm công!");
+
+    // Ràng buộc: chỉ cho chấm công tháng này (đến ngày hiện tại) và tháng trước, sau ngày hiện tại thì throw
+    ChamCong::KiemTraNgayHopLe(d);
+
+    ChamCong *cc = this->DB->FindCC(e->get_mnv(), d);
+    if (cc != nullptr)
+    {
+        cc->set_TrangThai(tt);
+        cc->set_SoGio(gio);
+        cc->set_GhiChu(gc);
+    }
+    else
+    {
+        this->DB->Insert(new ChamCong(e, d, tt, gio, gc));
+    }
+    return true;
 }
 
 inline void QLNV::DongBoChamCong(int thang, int nam)

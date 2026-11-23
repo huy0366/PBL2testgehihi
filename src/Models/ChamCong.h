@@ -32,7 +32,31 @@ public:
 
     string get_GhiChu() const;
     void set_GhiChu(const string &);
+
+    static bool KiemTraNgayHopLe(const Date &);
 };
+
+inline bool ChamCong::KiemTraNgayHopLe(const Date &d)
+{
+    Date now = Date::DateHienTai();
+    if (d > now)
+    {
+        throw string("Không thể chấm công cho ngày trong tương lai (sau ngày hiện tại: " + now.ToString() + ")!");
+    }
+    int prevMonth = now.get_month() - 1;
+    int prevYear = now.get_year();
+    if (prevMonth < 1)
+    {
+        prevMonth = 12;
+        prevYear--;
+    }
+    Date minDate(1, prevMonth, prevYear);
+    if (d < minDate)
+    {
+        throw string("Chỉ được phép chấm công trong tháng này (tháng " + to_string(now.get_month()) + ") và tháng trước (tháng " + to_string(prevMonth) + ")!");
+    }
+    return true;
+}
 
 ChamCong::ChamCong(Employee *nv = nullptr, const Date &ngay = Date(), const int &tt = 1,
                    const double &gio = 8.0, const string &gc = "")
@@ -42,7 +66,11 @@ Employee *ChamCong::get_NV() const { return this->NV; }
 void ChamCong::set_NV(Employee *nv) { this->NV = nv; }
 
 Date ChamCong::get_Ngay() const { return this->Ngay; }
-void ChamCong::set_Ngay(const Date &d) { this->Ngay = d; }
+void ChamCong::set_Ngay(const Date &d)
+{
+    KiemTraNgayHopLe(d);
+    this->Ngay = d;
+}
 
 int ChamCong::get_TrangThai() const { return this->TrangThai; }
 void ChamCong::set_TrangThai(const int &tt) { this->TrangThai = tt; }
